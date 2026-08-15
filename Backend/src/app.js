@@ -2,6 +2,7 @@ import express from "express";
 import cookie from "cookie-parser";
 import morgan from "morgan";
 const app = express();
+import authRouter from "./routes/auth.route";
 
 app.use(morgan("dev"));
 app.use(express.json());
@@ -13,5 +14,7 @@ app.get("/health", (req, res)=>{
         message: "Server is Running"
     })
 })
+
+app.use("/api/auth", authRouter);
 
 export default app;
