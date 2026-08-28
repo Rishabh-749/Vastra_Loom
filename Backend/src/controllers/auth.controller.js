@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import userModel from "../models/user.model.js";
-import config from "../config/config.js";
+import {config} from "../config/config.js";
 
 const sendTokenResponse = async (user, res, message)=>{
     const token = jwt.sign({
@@ -16,7 +16,7 @@ const sendTokenResponse = async (user, res, message)=>{
     })
 }
 
-const registerController = async ()=> {
+const registerController = async (req, res)=> {
     const {fullname, email, password, contact, isSeller} = req.body;
 
     try{
@@ -47,7 +47,7 @@ const registerController = async ()=> {
     }
 }
 
-const loginController = async ()=>{
+const loginController = async (req, res)=>{
      const { email, password } = req.body;
 
     const user = await userModel.findOne({ email });
@@ -65,7 +65,71 @@ const loginController = async ()=>{
     await sendTokenResponse(user, res, "User logged in successfully")
 }
 
+const googleCallback = async (req, res) =>{
+    const {id, displayName, emails, photos} = req.user;
+    const email = emails[ 0 ].value;
+    const profilePic = photos[ 0 ].value;
+
+    let user = await userModel.findOne({
+        email
+    })
+
+    if(!user){
+        user = await userModel.create({
+            email,
+            googleId: id,
+            fullname: displayName,
+        })
+    }
+
+    const token = jwt.sign({
+        id: user._id,
+    }, config.JWT_SECRET, {
+        expiresIn: "7d"
+    });
+
+    res.cookie("token", token);
+
+    res.redirect("http://localhost:5173/");
+}
+
+const githubCallback = async (req, res) => {
+    const { id, displayName, username, emails } = req.user;
+    
+    // Passport GitHub strategy with 'user:email' scope typically provides emails
+    const email = emails && emails.length > 0 ? emails[0].value : `${username}@github.com`;
+    const nameToUse = displayName || username || "GitHub User";
+
+    let user = await userModel.findOne({ email });
+
+    if (!user) {
+        user = await userModel.findOne({ githubId: id });
+    }
+
+    if (!user) {
+        user = await userModel.create({
+            email,
+            githubId: id,
+            fullname: nameToUse,
+        });
+    } else if (!user.githubId) {
+        user.githubId = id;
+        await user.save();
+    }
+
+    const token = jwt.sign({
+        id: user._id,
+    }, config.JWT_SECRET, {
+        expiresIn: "7d"
+    });
+
+    res.cookie("token", token);
+    res.redirect("http://localhost:5173/");
+}
+
 export default {
     registerController,
-    loginController
+    loginController,
+    googleCallback,
+    githubCallback
 }
