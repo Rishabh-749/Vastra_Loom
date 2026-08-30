@@ -3,6 +3,7 @@ import cookie from "cookie-parser";
 import morgan from "morgan";
 const app = express();
 import authRouter from "./routes/auth.route.js";
+import productRouter from "./routes/product.route.js";
 import cors from "cors";
 import passport from "passport";
 import jwt from 'jsonwebtoken';
@@ -45,5 +46,6 @@ app.get("/health", (req, res)=>{
 })
 
 app.use("/api/auth", authRouter);
+app.use("/api/products", productRouter);
 
 export default app;
