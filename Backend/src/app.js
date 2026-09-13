@@ -11,10 +11,10 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as GitHubStrategy } from 'passport-github2';
 import { config } from "./config/config.js";
 
-// app.use(cors({
-//     origin: "http://localhost:5173",
-//     credentials: true,
-// }));
+app.use(cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+}));
 
 app.use(morgan("dev"));
 app.use(express.json());
@@ -46,6 +46,6 @@ app.get("/health", (req, res)=>{
 })
 
 app.use("/api/auth", authRouter);
-app.use("/api/products", productRouter);
+app.use("/api/products/", productRouter);
 
 export default app;
