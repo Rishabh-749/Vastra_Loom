@@ -4,10 +4,18 @@ import {validateRegisterUser, validateLoginUser} from "../validators/auth.valida
 import passport from "passport";
 import { config } from "../config/config.js";
 
+import { authenticateUser } from "../middlewares/auth.middleware.js";
+
 const authRouter = express.Router();
 
 authRouter.post("/register", validateRegisterUser, authController.registerController);
 authRouter.post("/login", validateLoginUser, authController.loginController);
+authRouter.get("/me", authenticateUser, (req, res) => {
+    res.status(200).json({
+        success: true,
+        user: req.user
+    });
+});
 
 authRouter.get("/google",passport.authenticate("google", {scope: ["profile", "email"]}));
 authRouter.get("/google/callback",

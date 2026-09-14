@@ -1,9 +1,9 @@
 import axios from "axios";
 
 const authApiInstance = axios.create({
-    baseURL: 'http://localhost:8080/api/auth',
+    baseURL: '/api/auth',
     withCredentials: true
-})
+});
 
 export const register = async({email, password, contact, fullname, isSeller}) =>{
     const response = await authApiInstance.post("/register", {
@@ -15,7 +15,7 @@ export const register = async({email, password, contact, fullname, isSeller}) =>
     });
 
     return response.data;
-}
+};
 
 export const login = async({email, password}) =>{
     const response = await authApiInstance.post("/login", {
@@ -24,4 +24,9 @@ export const login = async({email, password}) =>{
     });
 
     return response.data;
-}
+};
+
+export const getMe = async () => {
+    const response = await authApiInstance.get("/me");
+    return response.data;
+};
