@@ -65,7 +65,7 @@ const Login = () => {
       <div className="lg:hidden flex items-center justify-between px-5 py-4 border-b border-[#2a2520] bg-[#0a0906] z-20 sticky top-0">
         <div className="flex items-center gap-2 text-[#C6A87C]">
           <i className="ri-shopping-bag-3-line text-lg"></i>
-          <span className="text-base font-bold tracking-[0.15em] uppercase">Snitch</span>
+          <span className="text-base font-bold tracking-[0.15em] uppercase">VASTRA LOOM</span>
         </div>
         <a href="/register" className="text-xs text-[#C6A87C] font-semibold border border-[#C6A87C]/30 px-3 py-1 rounded-full hover:bg-[#C6A87C]/10 transition-colors">
           Register
@@ -112,10 +112,10 @@ const Login = () => {
 
         {/* ── Top bar: Logo + Nav ── */}
         <div className="relative z-20 flex items-center justify-between px-10 pt-7">
-          {/* Snitch Logo */}
+          {/* VASTRA LOOM Logo */}
           <div className="flex items-center gap-2 text-[#C6A87C]">
             <i className="ri-shopping-bag-3-line text-xl"></i>
-            <span className="text-lg font-bold tracking-[0.18em] uppercase">Snitch</span>
+            <span className="text-lg font-bold tracking-[0.18em] uppercase">VASTRA LOOM</span>
           </div>
           {/* Auth direction */}
           <div className="flex items-center gap-1 text-xs text-gray-400">
@@ -177,7 +177,7 @@ const Login = () => {
           <div className="mb-6">
             <h2 className="text-xl sm:text-2xl font-semibold text-white mb-1 leading-tight">
               Welcome Back to{' '}
-              <ShinyText text="Snitch" color="#C6A87C" shineColor="#fff8e7" speed={3} className="font-semibold" />
+              <ShinyText text="VASTRA LOOM" color="#C6A87C" shineColor="#fff8e7" speed={3} className="font-semibold" />
             </h2>
             <p className="text-xs text-[#5a5651]">
               Sign in to continue your premium shopping experience.
