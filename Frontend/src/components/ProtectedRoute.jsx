@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, Navigate } from 'react-router';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import Navbar from './Navbar';
 import ShinyText from './ShinyText';
@@ -122,72 +122,10 @@ const ProtectedRoute = ({ children, requiredRole = 'seller' }) => {
     );
   }
 
-  // ── Case 2: Logged in, but lacks required role (e.g. buyer instead of seller) ──
+  // ── Case 2: Logged in, but is a Buyer (not a Seller) ──
+  // Buyers cannot access seller routes -> redirect immediately to /
   if (requiredRole && user.role !== requiredRole) {
-    return (
-      <div className="min-h-screen w-full bg-[#080806] flex flex-col font-sans text-gray-100">
-        <Navbar variant="seller" subtitle="Access Restricted" />
-        
-        <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
-          <div className="w-full max-w-md rounded-2xl bg-[#100f0d] border border-[#2a2520] p-6 sm:p-8 text-center shadow-[0_20px_60px_rgba(0,0,0,0.6)] space-y-6 animate-in fade-in zoom-in-95 duration-200">
-            {/* Warning Shield Icon */}
-            <div className="w-16 h-16 rounded-2xl bg-[#181511] border border-amber-500/40 flex items-center justify-center mx-auto text-amber-400 shadow-[0_0_30px_rgba(245,158,11,0.15)]">
-              <i className="ri-shield-keyhole-line text-3xl" />
-            </div>
-
-            {/* Explanation Heading */}
-            <div className="space-y-2">
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                Seller Privileges <span className="text-amber-400">Required</span>
-              </h2>
-              <p className="text-xs sm:text-sm text-[#8a8278] leading-relaxed">
-                You are currently signed in as <span className="text-white font-medium">{user.fullname || user.email}</span> with a <span className="text-amber-400 uppercase font-bold text-xs">{user.role || 'Buyer'}</span> account.
-              </p>
-            </div>
-
-            {/* Status Info Box */}
-            <div className="p-3.5 rounded-xl bg-[#0a0907] border border-[#231f1a] text-left text-xs space-y-1.5">
-              <div className="flex items-center gap-2 text-amber-400 font-semibold text-[11px] uppercase tracking-wider">
-                <i className="ri-alert-line" />
-                Permission Details
-              </div>
-              <p className="text-[11px] text-[#6e675f] leading-relaxed">
-                Access to the Seller Studio is restricted to verified VASTRA LOOM Sellers. Customer accounts cannot manage collections or list products.
-              </p>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="space-y-2.5 pt-2">
-              <Link
-                to="/register"
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#C6A87C] via-[#e8d5aa] to-[#C6A87C] text-[#080806] text-xs font-bold uppercase tracking-wider shadow-[0_0_20px_rgba(198,168,124,0.25)] hover:shadow-[0_0_30px_rgba(198,168,124,0.4)] transition-all flex items-center justify-center gap-2"
-              >
-                <i className="ri-store-2-line text-sm" />
-                Register a Seller Account
-              </Link>
-
-              <Link
-                to="/login"
-                className="w-full py-3 px-4 rounded-xl border border-[#2a2520] hover:border-[#C6A87C]/50 bg-[#0d0c0b] text-gray-300 hover:text-white text-xs font-semibold uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
-              >
-                <i className="ri-user-shared-line text-sm text-[#C6A87C]" />
-                Switch to Another Account
-              </Link>
-            </div>
-
-            <div className="pt-2">
-              <Link
-                to="/"
-                className="text-xs text-[#6e675f] hover:text-[#C6A87C] transition-colors inline-flex items-center gap-1"
-              >
-                <i className="ri-arrow-left-line text-xs" />
-                Return to Storefront
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <Navigate to="/" replace />;
   }
 
   // ── Authorized: Render Child Component ──

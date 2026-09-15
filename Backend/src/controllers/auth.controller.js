@@ -100,7 +100,8 @@ const googleCallback = async (req, res) =>{
         maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    res.redirect("http://localhost:5173/");
+    const redirectUrl = user.role === 'seller' ? "http://localhost:5173/seller/dashboard" : "http://localhost:5173/";
+    res.redirect(redirectUrl);
 }
 
 const githubCallback = async (req, res) => {
@@ -139,7 +140,9 @@ const githubCallback = async (req, res) => {
         sameSite: "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000
     });
-    res.redirect("http://localhost:5173/");
+
+    const redirectUrl = user.role === 'seller' ? "http://localhost:5173/seller/dashboard" : "http://localhost:5173/";
+    res.redirect(redirectUrl);
 }
 
 export default {

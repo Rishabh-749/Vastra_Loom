@@ -15,9 +15,9 @@ export const useAuth = () => {
             dispatch(setUser(data.user));
             return data.user;
         } catch (err) {
-            const errorMsg = err?.response?.data?.message || err?.message || "Registration failed";
+            const errorMsg = err?.response?.data?.errors?.[0]?.msg || err?.response?.data?.message || err?.message || "Registration failed";
             dispatch(setError(errorMsg));
-            throw err;
+            throw new Error(errorMsg);
         } finally {
             dispatch(setLoading(false));
         }

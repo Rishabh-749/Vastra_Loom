@@ -1,22 +1,46 @@
-import {createBrowserRouter} from "react-router"
-import Register from "@/features/auth/pages/Register"
-import Login from "@/features/auth/pages/Login"
-import CreateProduct from "@/features/product/pages/CreateProduct"
-import ProtectedRoute from "@/components/ProtectedRoute"
-import Dashboard from "@/features/product/pages/Dashboard"
+import { createBrowserRouter } from "react-router";
+import Register from "@/features/auth/pages/Register";
+import Login from "@/features/auth/pages/Login";
+import CreateProduct from "@/features/product/pages/CreateProduct";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import BuyerRoute from "@/components/BuyerRoute";
+import PublicAuthRoute from "@/components/PublicAuthRoute";
+import Dashboard from "@/features/product/pages/Dashboard";
+import Home from "@/features/product/pages/Home";
+import ProductDetail from "@/features/product/pages/ProductDetail";
 
 export const routes = createBrowserRouter([
     {
         path: "/",
-        element: <h1>Hello world</h1>
+        element: (
+            <BuyerRoute>
+                <Home />
+            </BuyerRoute>
+        )
+    },
+    {
+        path: "/product/:id",
+        element: <ProductDetail />
+    },
+    {
+        path: "/products/:id",
+        element: <ProductDetail />
     },
     {
         path: "/register",
-        element: <Register/>
+        element: (
+            <PublicAuthRoute>
+                <Register />
+            </PublicAuthRoute>
+        )
     },
     {
         path: "/login",
-        element: <Login/>
+        element: (
+            <PublicAuthRoute>
+                <Login />
+            </PublicAuthRoute>
+        )
     },
     {
         path: "/seller",
@@ -25,7 +49,7 @@ export const routes = createBrowserRouter([
                 index: true,
                 element: (
                     <ProtectedRoute requiredRole="seller">
-                        <Dashboard/>
+                        <Dashboard />
                     </ProtectedRoute>
                 )
             },
@@ -33,7 +57,7 @@ export const routes = createBrowserRouter([
                 path: "/seller/create-product",
                 element: (
                     <ProtectedRoute requiredRole="seller">
-                        <CreateProduct/>
+                        <CreateProduct />
                     </ProtectedRoute>
                 )
             },
@@ -41,10 +65,18 @@ export const routes = createBrowserRouter([
                 path: "/seller/dashboard",
                 element: (
                     <ProtectedRoute requiredRole="seller">
-                        <Dashboard/>
+                        <Dashboard />
+                    </ProtectedRoute>
+                )
+            },
+            {
+                path: "/seller/product/:id",
+                element: (
+                    <ProtectedRoute requiredRole="seller">
+                        <ProductDetail />
                     </ProtectedRoute>
                 )
             }
         ]
     }
-])
+]);

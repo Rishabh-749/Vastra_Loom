@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import 'remixicon/fonts/remixicon.css';
 import Navbar from '../../../components/Navbar';
 import ShinyText from '../../../components/ShinyText';
@@ -22,11 +22,7 @@ const formatDate = (isoString) => {
   });
 };
 
-const getImageUrl = (imageItem) => {
-  if (!imageItem) return '';
-  if (typeof imageItem === 'string') return imageItem;
-  return imageItem.url || '';
-};
+import { getImageUrl } from '../../../utils/image';
 
 const ProductGridCard = ({ product, onInspect }) => {
   const [imgError, setImgError] = useState(false);
@@ -78,14 +74,13 @@ const ProductGridCard = ({ product, onInspect }) => {
 
         {/* Hover Quick Action: Inspect Piece */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 bg-black/40 backdrop-blur-xs">
-          <button
-            type="button"
-            onClick={() => onInspect(product)}
+          <Link
+            to={`/seller/product/${product._id}`}
             className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#e8d5aa] text-[#080806] text-xs font-bold uppercase tracking-wider shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <i className="ri-eye-line text-sm" />
             Inspect Piece
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -100,9 +95,11 @@ const ProductGridCard = ({ product, onInspect }) => {
         </div>
 
         <div>
-          <h3 className="text-base font-semibold text-white tracking-tight line-clamp-1 group-hover:text-[#C6A87C] transition-colors">
-            {product.title}
-          </h3>
+          <Link to={`/seller/product/${product._id}`}>
+            <h3 className="text-base font-semibold text-white tracking-tight line-clamp-1 hover:text-[#C6A87C] transition-colors">
+              {product.title}
+            </h3>
+          </Link>
           <p className="text-xs text-[#8a8278] line-clamp-2 mt-1 leading-relaxed">
             {product.description}
           </p>
@@ -119,14 +116,13 @@ const ProductGridCard = ({ product, onInspect }) => {
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={() => onInspect(product)}
+          <Link
+            to={`/seller/product/${product._id}`}
             className="p-2 rounded-lg border border-[#2a2520] hover:border-[#C6A87C]/50 text-gray-400 hover:text-white transition-colors cursor-pointer"
-            title="View Details"
+            title="Manage Piece & Variants"
           >
             <i className="ri-arrow-right-up-line text-sm" />
-          </button>
+          </Link>
         </div>
       </div>
     </div>
@@ -134,6 +130,7 @@ const ProductGridCard = ({ product, onInspect }) => {
 };
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { handleGetSellerProduct, loading, error, sellerProducts = [] } = useProduct();
 
@@ -141,8 +138,6 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('newest'); // 'newest' | 'price-desc' | 'price-asc' | 'title'
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
-  const [inspectProduct, setInspectProduct] = useState(null);
-  const [inspectImageIdx, setInspectImageIdx] = useState(0);
   const [copiedId, setCopiedId] = useState(false);
 
   // Fetch products on mount
@@ -200,11 +195,6 @@ const Dashboard = () => {
     navigator.clipboard.writeText(id);
     setCopiedId(true);
     setTimeout(() => setCopiedId(false), 2000);
-  };
-
-  const handleOpenInspect = (product) => {
-    setInspectProduct(product);
-    setInspectImageIdx(0);
   };
 
   return (
@@ -497,7 +487,6 @@ const Dashboard = () => {
               <ProductGridCard
                 key={product._id}
                 product={product}
-                onInspect={handleOpenInspect}
               />
             ))}
           </div>
@@ -523,7 +512,7 @@ const Dashboard = () => {
                       <tr
                         key={product._id}
                         className="hover:bg-[#14120e] transition-colors group cursor-pointer"
-                        onClick={() => handleOpenInspect(product)}
+                        onClick={() => navigate(`/seller/product/${product._id}`)}
                       >
                         {/* Piece & Title */}
                         <td className="py-3.5 px-4 sm:px-6">
@@ -586,16 +575,14 @@ const Dashboard = () => {
 
                         {/* Action */}
                         <td className="py-3.5 px-4 text-right">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenInspect(product);
-                            }}
-                            className="px-3 py-1.5 rounded-lg border border-[#2a2520] hover:border-[#C6A87C]/60 text-gray-300 hover:text-white bg-[#0d0c0b] text-[11px] font-medium transition-colors cursor-pointer"
+                          <Link
+                            to={`/seller/product/${product._id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="px-3 py-1.5 rounded-lg border border-[#2a2520] hover:border-[#C6A87C]/60 text-gray-300 hover:text-[#C6A87C] bg-[#0d0c0b] text-[11px] font-medium transition-colors inline-flex items-center gap-1 cursor-pointer"
                           >
-                            Inspect
-                          </button>
+                            <span>Manage</span>
+                            <i className="ri-arrow-right-up-line text-xs" />
+                          </Link>
                         </td>
                       </tr>
                     );
@@ -607,150 +594,6 @@ const Dashboard = () => {
         )}
 
       </main>
-
-      {/* ══════════════════════════════════════════════════════════
-          CINEMATIC PRODUCT INSPECTION MODAL
-      ══════════════════════════════════════════════════════════ */}
-      {inspectProduct && (
-        <div
-          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200"
-          onClick={() => setInspectProduct(null)}
-        >
-          <div
-            className="relative w-full max-w-4xl max-h-[90vh] rounded-2xl bg-[#0d0c0b] border border-[#2a2520] overflow-hidden shadow-[0_25px_70px_rgba(0,0,0,0.8)] flex flex-col md:flex-row"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close Button */}
-            <button
-              type="button"
-              onClick={() => setInspectProduct(null)}
-              className="absolute top-3 right-3 z-30 w-8 h-8 rounded-lg bg-black/60 hover:bg-[#1f1b15] border border-[#2a2520] text-gray-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-            >
-              <i className="ri-close-line text-lg" />
-            </button>
-
-            {/* Left Side: Photo Showcase */}
-            <div className="w-full md:w-1/2 bg-[#050504] p-5 flex flex-col justify-between">
-              {/* Active Image */}
-              <div className="relative aspect-[3/4] w-full rounded-xl overflow-hidden bg-black border border-[#231f1a] flex items-center justify-center">
-                {inspectProduct?.images?.[inspectImageIdx] ? (
-                  <img
-                    src={getImageUrl(inspectProduct.images[inspectImageIdx])}
-                    alt={inspectProduct.title}
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-gray-600 select-none">
-                    <i className="ri-vip-crown-2-line text-3xl text-[#C6A87C] mb-2" />
-                    <span className="text-xs uppercase tracking-widest text-gray-400">Vastra Loom Piece</span>
-                  </div>
-                )}
-                <div className="absolute top-3 left-3 px-2.5 py-1 rounded bg-[#C6A87C] text-[#080806] text-[10px] font-bold uppercase tracking-wider shadow">
-                  Visual #{inspectImageIdx + 1}
-                </div>
-              </div>
-
-              {/* Thumbnails if > 1 */}
-              {inspectProduct?.images?.length > 1 && (
-                <div className="flex gap-2 pt-3 overflow-x-auto">
-                  {inspectProduct.images.map((img, idx) => {
-                    const thumbUrl = getImageUrl(img);
-                    return (
-                      <button
-                        key={img._id || idx}
-                        type="button"
-                        onClick={() => setInspectImageIdx(idx)}
-                        className={`relative w-12 h-14 rounded-lg overflow-hidden border shrink-0 transition-all cursor-pointer ${
-                          idx === inspectImageIdx
-                            ? 'border-[#C6A87C] ring-1 ring-[#C6A87C] scale-105'
-                            : 'border-[#2a2520] opacity-60 hover:opacity-100'
-                        }`}
-                      >
-                        <img src={thumbUrl} alt="" className="w-full h-full object-cover" />
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Right Side: Specifications & Metadata */}
-            <div className="w-full md:w-1/2 p-6 md:p-8 flex flex-col justify-between overflow-y-auto space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C6A87C]">
-                    Atelier Piece Details
-                  </span>
-                  <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-tight">
-                    {inspectProduct.title}
-                  </h2>
-                </div>
-
-                {/* Price Display */}
-                <div className="p-3.5 rounded-xl bg-[#12100d] border border-[#231f1a] flex items-baseline justify-between">
-                  <span className="text-xs text-[#8a8278] uppercase font-semibold">Catalog Valuation</span>
-                  <span className="text-2xl font-bold text-white font-mono tracking-tight">
-                    {formatCurrency(inspectProduct?.price?.amount, inspectProduct?.price?.currency)}
-                  </span>
-                </div>
-
-                {/* Narrative Description */}
-                <div className="space-y-1.5">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-[#a0988e]">
-                    Garment Narrative
-                  </span>
-                  <p className="text-xs text-gray-300 leading-relaxed max-h-44 overflow-y-auto pr-1">
-                    {inspectProduct.description}
-                  </p>
-                </div>
-
-                {/* Metadata details */}
-                <div className="space-y-2.5 pt-2 border-t border-[#231f1a] text-xs text-[#8a8278]">
-                  <div className="flex items-center justify-between">
-                    <span>Catalogued Date:</span>
-                    <span className="font-mono text-gray-300">{formatDate(inspectProduct.createdAt)}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Product ID:</span>
-                    <button
-                      type="button"
-                      onClick={() => handleCopyId(inspectProduct._id)}
-                      className="font-mono text-gray-300 hover:text-[#C6A87C] flex items-center gap-1 transition-colors cursor-pointer"
-                      title="Click to copy ID"
-                    >
-                      <span className="truncate max-w-[150px]">{inspectProduct._id}</span>
-                      <i className={copiedId ? 'ri-check-line text-emerald-400' : 'ri-file-copy-line'} />
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Visual Assets:</span>
-                    <span className="font-mono text-gray-300">
-                      {inspectProduct?.images?.length || 0} Media Asset{(inspectProduct?.images?.length || 0) > 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Seller Reference:</span>
-                    <span className="font-mono text-[#6e675f] truncate max-w-[150px]">
-                      {inspectProduct.seller || user?._id || 'Verified Seller'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Close / Action footer */}
-              <div className="pt-4 border-t border-[#231f1a] flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setInspectProduct(null)}
-                  className="w-full py-2.5 rounded-xl border border-[#2a2520] hover:border-[#3a342c] text-xs font-semibold uppercase tracking-wider text-gray-300 hover:text-white bg-[#0d0c0b] transition-colors cursor-pointer"
-                >
-                  Close Inspection
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Footer ── */}
       <footer className="w-full border-t border-[#1a1713] bg-[#050504] py-6 mt-16">

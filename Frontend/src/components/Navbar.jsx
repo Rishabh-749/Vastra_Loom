@@ -1,39 +1,35 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router';
-import { useSelector } from 'react-redux';
 import 'remixicon/fonts/remixicon.css';
-import ShinyText from './ShinyText';
+import { useAuth } from '../features/auth/hooks/useAuth';
 
 /**
  * Standard, highly attractive Navbar for VASTRA LOOM.
- * Supports both standard customer storefront mode and seller studio mode.
- * 
- * Props:
- * - variant: 'default' | 'seller' (default: 'default')
- * - subtitle: string (optional breadcrumb / label, e.g. "New Product")
- * - onClear: function (optional callback for clear/reset button in seller mode)
- * - onClose: function (optional close/exit handler)
+ * Supports customer storefront mode (buyer) and seller studio mode (seller).
  */
 const Navbar = ({
   variant = 'default',
   subtitle,
   onClear,
-  onClose,
   showNavLinks = true,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useSelector((state) => state.auth || { user: null });
+  const { user, handleLogout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isSellerMode = variant === 'seller' || location.pathname.startsWith('/seller');
 
   const navLinks = [
-    { label: 'Collections', href: '/#collections' },
-    { label: 'New Drops', href: '/#new-drops' },
-    { label: 'Men', href: '/#men' },
-    { label: 'Atelier', href: '/#atelier' },
+    { label: 'Collections', href: '/#catalog' },
+    { label: 'New Drops', href: '/#catalog' },
+    { label: 'Heritage', href: '/#heritage' },
   ];
+
+  const onSignOut = () => {
+    handleLogout();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full h-16 bg-[#080806]/90 backdrop-blur-xl border-b border-[#2a2520] transition-colors">
@@ -42,7 +38,7 @@ const Navbar = ({
         {/* ── Brand Logo & Context ── */}
         <div className="flex items-center gap-3 sm:gap-4 shrink-0">
           <Link
-            to="/"
+            to={isSellerMode ? "/seller/dashboard" : "/"}
             className="flex items-center gap-3 text-[#C6A87C] hover:opacity-95 transition-opacity group"
           >
             <div className="w-9 h-9 rounded-xl bg-[#12100d] border border-[#2a2520] group-hover:border-[#C6A87C]/50 flex items-center justify-center transition-colors shadow-inner shrink-0">
@@ -53,7 +49,7 @@ const Navbar = ({
             </span>
           </Link>
 
-          {/* Subtitle / Breadcrumb (e.g. / New Product) */}
+          {/* Subtitle / Breadcrumb (e.g. / Atelier Dashboard) */}
           {subtitle && (
             <div className="flex items-center gap-2 pl-3 sm:pl-4 border-l border-[#2a2520] h-5">
               <span className="text-xs text-[#a0988e] font-medium tracking-wide">
@@ -112,47 +108,42 @@ const Navbar = ({
                 <button
                   type="button"
                   onClick={onClear}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white hover:bg-[#161411] transition-colors"
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white hover:bg-[#161411] transition-colors cursor-pointer"
                 >
                   Clear
                 </button>
               )}
 
-              <button
-                type="button"
-                onClick={onClose || (() => navigate('/'))}
-                title="Close and return"
-                className="w-8 h-8 rounded-lg border border-[#2a2520] hover:border-[#C6A87C]/60 bg-[#0d0c0b] text-gray-400 hover:text-white flex items-center justify-center transition-all duration-200 active:scale-95"
-              >
-                <i className="ri-close-line text-lg" />
-              </button>
+              {/* Seller Sign Out */}
+              {user && (
+                <button
+                  type="button"
+                  onClick={onSignOut}
+                  title="Sign Out of Atelier"
+                  className="px-3 py-1.5 rounded-lg border border-[#2a2520] hover:border-red-900/60 bg-[#0d0c0b] text-gray-400 hover:text-red-400 flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer"
+                >
+                  <i className="ri-logout-box-r-line" />
+                  <span className="hidden sm:inline">Sign Out</span>
+                </button>
+              )}
             </div>
           ) : (
-            /* Standard User / Customer Mode Actions */
+            /* Buyer / Customer Mode Actions */
             <div className="flex items-center gap-2 sm:gap-3">
-              {/* Search Button */}
-              <button
-                type="button"
-                title="Search Collections"
-                className="w-8 h-8 rounded-lg border border-[#2a2520] hover:border-[#C6A87C]/50 bg-[#0d0c0b] text-gray-300 hover:text-[#C6A87C] flex items-center justify-center transition-colors"
-              >
-                <i className="ri-search-line text-sm" />
-              </button>
-
               {/* Wishlist */}
               <button
                 type="button"
                 title="Wishlist"
-                className="hidden sm:flex w-8 h-8 rounded-lg border border-[#2a2520] hover:border-[#C6A87C]/50 bg-[#0d0c0b] text-gray-300 hover:text-[#C6A87C] items-center justify-center transition-colors"
+                className="hidden sm:flex w-8 h-8 rounded-lg border border-[#2a2520] hover:border-[#C6A87C]/50 bg-[#0d0c0b] text-gray-300 hover:text-[#C6A87C] items-center justify-center transition-colors cursor-pointer"
               >
                 <i className="ri-heart-line text-sm" />
               </button>
 
-              {/* Cart / Bag */}
+              {/* Shopping Bag */}
               <button
                 type="button"
                 title="Shopping Bag"
-                className="relative w-8 h-8 rounded-lg border border-[#2a2520] hover:border-[#C6A87C]/50 bg-[#0d0c0b] text-gray-300 hover:text-[#C6A87C] flex items-center justify-center transition-colors"
+                className="relative w-8 h-8 rounded-lg border border-[#2a2520] hover:border-[#C6A87C]/50 bg-[#0d0c0b] text-gray-300 hover:text-[#C6A87C] flex items-center justify-center transition-colors cursor-pointer"
               >
                 <i className="ri-shopping-bag-3-line text-sm" />
                 <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#C6A87C] text-[#080806] font-bold text-[9px] flex items-center justify-center shadow">
@@ -163,15 +154,26 @@ const Navbar = ({
               {/* User Account / Auth */}
               {user ? (
                 <div className="flex items-center gap-2 pl-2 border-l border-[#2a2520]">
-                  <div className="w-8 h-8 rounded-full bg-[#1c1914] border border-[#C6A87C]/40 text-[#C6A87C] flex items-center justify-center text-xs font-bold uppercase">
+                  <div
+                    title={user.fullname || user.email}
+                    className="w-8 h-8 rounded-full bg-[#1c1914] border border-[#C6A87C]/40 text-[#C6A87C] flex items-center justify-center text-xs font-bold uppercase"
+                  >
                     {user.fullname ? user.fullname[0] : 'U'}
                   </div>
+                  <button
+                    type="button"
+                    onClick={onSignOut}
+                    title="Sign Out"
+                    className="w-8 h-8 rounded-lg border border-[#2a2520] hover:border-red-900/60 bg-[#0d0c0b] text-gray-400 hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer"
+                  >
+                    <i className="ri-logout-box-r-line text-xs" />
+                  </button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 pl-1">
                   <Link
                     to="/login"
-                    className="hidden sm:inline-block px-3 py-1.5 rounded-lg border border-[#2a2520] hover:border-[#C6A87C]/40 text-xs font-semibold text-gray-300 hover:text-white bg-[#0d0c0b] transition-colors"
+                    className="px-3 py-1.5 rounded-lg border border-[#2a2520] hover:border-[#C6A87C]/40 text-xs font-semibold text-gray-300 hover:text-white bg-[#0d0c0b] transition-colors"
                   >
                     Sign In
                   </Link>
@@ -188,7 +190,7 @@ const Navbar = ({
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden w-8 h-8 rounded-lg border border-[#2a2520] bg-[#0d0c0b] text-gray-300 flex items-center justify-center"
+                className="md:hidden w-8 h-8 rounded-lg border border-[#2a2520] bg-[#0d0c0b] text-gray-300 flex items-center justify-center cursor-pointer"
               >
                 <i className={mobileMenuOpen ? 'ri-close-line text-base' : 'ri-menu-line text-base'} />
               </button>
@@ -211,15 +213,6 @@ const Navbar = ({
               {link.label}
             </a>
           ))}
-          <div className="pt-2 border-t border-[#2a2520] flex gap-2">
-            <Link
-              to="/seller/create-product"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full text-center py-2 rounded-lg bg-[#161411] border border-[#2a2520] text-xs text-[#C6A87C] font-semibold uppercase tracking-wider"
-            >
-              Seller Atelier
-            </Link>
-          </div>
         </div>
       )}
     </header>

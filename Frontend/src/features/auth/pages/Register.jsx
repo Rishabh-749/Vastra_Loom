@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import ShinyText from '../../../components/ShinyText';
-import FoldText from '../../../components/FoldText';
 import LightPillar from '../../../components/LightPillar';
 import WarpText from '../../../components/WarpText';
 import 'remixicon/fonts/remixicon.css';
@@ -14,7 +13,7 @@ const EyeToggle = ({ show, onToggle }) => (
     type="button"
     tabIndex={-1}
     onClick={onToggle}
-    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#4a4641] hover:text-[#C6A87C] transition-colors"
+    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#4a4641] hover:text-[#C6A87C] transition-colors cursor-pointer"
   >
     <i className={`${show ? 'ri-eye-off-line' : 'ri-eye-line'} text-sm`}></i>
   </button>
@@ -28,15 +27,13 @@ const Field = ({ icon, ...props }) => (
     </div>
     <input
       {...props}
-      className="w-full pl-10 pr-4 py-3.5 bg-[#0d0c0b] border border-[#2a2520] rounded-lg text-base text-gray-100 placeholder-[#4a4641] focus:outline-none focus:border-[#C6A87C]/60 transition-all duration-200"
+      className="w-full pl-10 pr-4 py-3 bg-[#0d0c0b] border border-[#2a2520] rounded-lg text-sm sm:text-base text-gray-100 placeholder-[#4a4641] focus:outline-none focus:border-[#C6A87C]/60 transition-all duration-200"
     />
   </div>
 );
 
-
-
 const Register = () => {
-  const {handleRegister} = useAuth()
+  const { handleRegister, loading, error: authError } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullname: '',
@@ -46,25 +43,68 @@ const Register = () => {
     confirmPassword: '',
     isSeller: false,
   });
-  const [showPw, setShowPw]   = useState(false);
+  const [formError, setFormError] = useState('');
+  const [showPw, setShowPw] = useState(false);
   const [showCpw, setShowCpw] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    if (formError) setFormError('');
+
+    if (name === 'contactNum') {
+      // Allow only numbers, max 10 digits
+      const digitsOnly = value.replace(/\D/g, '').slice(0, 10);
+      setFormData(prev => ({ ...prev, contactNum: digitsOnly }));
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
-  const handleSubmit = async(e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    await handleRegister({
-      fullname: formData.fullname,
-      email: formData.email,
-      contact: formData.contactNum,
-      password: formData.password,
-      isSeller: formData.isSeller,
-    });
-    navigate("/");
+    setFormError('');
+
+    if (!formData.fullname.trim() || formData.fullname.trim().length < 3) {
+      setFormError("Full name must be at least 3 characters long");
+      return;
+    }
+
+    if (!formData.contactNum || formData.contactNum.length !== 10) {
+      setFormError(`Contact number must be exactly 10 digits (currently ${formData.contactNum.length} digits)`);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setFormError("Password must be at least 6 characters long");
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setFormError("Passwords do not match. Please verify your password.");
+      return;
+    }
+
+    try {
+      const user = await handleRegister({
+        fullname: formData.fullname.trim(),
+        email: formData.email.trim(),
+        contact: formData.contactNum,
+        password: formData.password,
+        isSeller: formData.isSeller,
+      });
+
+      if (user?.role === 'seller' || formData.isSeller) {
+        navigate("/seller/dashboard", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
+    } catch (err) {
+      setFormError(err.message || "Registration failed. Please check your information.");
+    }
   };
+
+  const contactLen = formData.contactNum.length;
 
   return (
     // Mobile: scrollable. Desktop: viewport-locked, no scroll.
@@ -185,7 +225,7 @@ const Register = () => {
         <div className="w-full max-w-[420px] lg:max-w-[400px] p-5 sm:p-6 rounded-2xl bg-[#100f0d]/95 backdrop-blur-2xl border border-[#2a2520] shadow-[0_20px_70px_rgba(0,0,0,0.6)] relative z-10 my-4 lg:my-0">
 
           {/* Heading */}
-          <div className="mb-5">
+          <div className="mb-4">
             <h2 className="text-xl sm:text-2xl font-semibold text-white mb-1 leading-tight">
               Create Your{' '}
               <ShinyText text="Account" color="#C6A87C" shineColor="#fff8e7" speed={3} className="font-semibold" />
@@ -195,11 +235,62 @@ const Register = () => {
             </p>
           </div>
 
+          {/* Error Banner */}
+          {(formError || authError) && (
+            <div className="p-3 rounded-lg bg-red-950/40 border border-red-800/60 text-red-200 text-xs flex items-center gap-2 mb-3 animate-in fade-in duration-200">
+              <i className="ri-error-warning-line text-red-400 text-base shrink-0" />
+              <span className="leading-snug">{formError || authError}</span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-2.5">
 
-            <Field icon="ri-user-line"  type="text"  name="fullname"   placeholder="Full Name"     value={formData.fullname}   onChange={handleChange} required />
-            <Field icon="ri-mail-line"  type="email" name="email"      placeholder="Email Address"  value={formData.email}      onChange={handleChange} required />
-            <Field icon="ri-phone-line" type="tel"   name="contactNum" placeholder="Contact Number" value={formData.contactNum} onChange={handleChange} required />
+            <Field
+              icon="ri-user-line"
+              type="text"
+              name="fullname"
+              placeholder="Full Name"
+              value={formData.fullname}
+              onChange={handleChange}
+              required
+            />
+
+            <Field
+              icon="ri-mail-line"
+              type="email"
+              name="email"
+              placeholder="Email Address"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+
+            {/* Contact Number with 10-digit helper */}
+            <div>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#4a4641] group-focus-within:text-[#C6A87C] transition-colors duration-200">
+                  <i className="ri-phone-line text-[15px]"></i>
+                </div>
+                <input
+                  type="tel"
+                  name="contactNum"
+                  placeholder="Contact Number (10 digits)"
+                  value={formData.contactNum}
+                  onChange={handleChange}
+                  maxLength={10}
+                  required
+                  className="w-full pl-10 pr-14 py-3 bg-[#0d0c0b] border border-[#2a2520] rounded-lg text-sm sm:text-base text-gray-100 placeholder-[#4a4641] focus:outline-none focus:border-[#C6A87C]/60 transition-all duration-200"
+                />
+                <span className={`absolute inset-y-0 right-0 pr-3 flex items-center text-[11px] font-mono ${contactLen === 10 ? 'text-emerald-400' : 'text-[#6e675f]'}`}>
+                  {contactLen}/10
+                </span>
+              </div>
+              {contactLen > 0 && contactLen < 10 && (
+                <p className="text-[10px] text-amber-400 mt-1 ml-1 font-mono">
+                  {10 - contactLen} more digit{10 - contactLen > 1 ? 's' : ''} required
+                </p>
+              )}
+            </div>
 
             {/* Password */}
             <div className="relative group">
@@ -209,11 +300,11 @@ const Register = () => {
               <input
                 type={showPw ? 'text' : 'password'}
                 name="password"
-                placeholder="Password"
+                placeholder="Password (min 6 characters)"
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="w-full pl-10 pr-10 py-3.5 bg-[#0d0c0b] border border-[#2a2520] rounded-lg text-base text-gray-100 placeholder-[#4a4641] focus:outline-none focus:border-[#C6A87C]/60 transition-all duration-200"
+                className="w-full pl-10 pr-10 py-3 bg-[#0d0c0b] border border-[#2a2520] rounded-lg text-sm sm:text-base text-gray-100 placeholder-[#4a4641] focus:outline-none focus:border-[#C6A87C]/60 transition-all duration-200"
               />
               <EyeToggle show={showPw} onToggle={() => setShowPw(p => !p)} />
             </div>
@@ -230,7 +321,7 @@ const Register = () => {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
-                className="w-full pl-10 pr-10 py-3.5 bg-[#0d0c0b] border border-[#2a2520] rounded-lg text-base text-gray-100 placeholder-[#4a4641] focus:outline-none focus:border-[#C6A87C]/60 transition-all duration-200"
+                className="w-full pl-10 pr-10 py-3 bg-[#0d0c0b] border border-[#2a2520] rounded-lg text-sm sm:text-base text-gray-100 placeholder-[#4a4641] focus:outline-none focus:border-[#C6A87C]/60 transition-all duration-200"
               />
               <EyeToggle show={showCpw} onToggle={() => setShowCpw(p => !p)} />
             </div>
@@ -246,7 +337,7 @@ const Register = () => {
                 </div>
                 <div>
                   <div className="text-xs font-medium text-gray-200">Register as Seller</div>
-                  <div className="text-[11px] text-[#4a4641]">Start selling your products on VASTRA LOOM</div>
+                  <div className="text-[11px] text-[#4a4641]">Start selling your creations on VASTRA LOOM</div>
                 </div>
               </div>
               <div className={`w-9 h-5 rounded-full px-0.5 flex items-center flex-shrink-0 transition-colors duration-300 ${formData.isSeller ? 'bg-[#C6A87C]' : 'bg-[#2a2520]'}`}>
@@ -257,9 +348,17 @@ const Register = () => {
             {/* CTA */}
             <button
               type="submit"
-              className="w-full py-3 mt-1 rounded-lg bg-gradient-to-r from-[#C6A87C] via-[#e8d5aa] to-[#C6A87C] text-[#0e0c09] text-sm font-bold tracking-wide hover:shadow-[0_0_24px_rgba(198,168,124,0.3)] active:scale-[0.99] transition-all duration-300"
+              disabled={loading}
+              className="w-full py-3 mt-1 rounded-lg bg-gradient-to-r from-[#C6A87C] via-[#e8d5aa] to-[#C6A87C] text-[#0e0c09] text-sm font-bold tracking-wide hover:shadow-[0_0_24px_rgba(198,168,124,0.3)] active:scale-[0.99] transition-all duration-300 disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
             >
-              Create Account
+              {loading ? (
+                <>
+                  <i className="ri-loader-4-line animate-spin text-base" />
+                  <span>Creating Account...</span>
+                </>
+              ) : (
+                <span>Create Account</span>
+              )}
             </button>
 
             {/* OR divider */}

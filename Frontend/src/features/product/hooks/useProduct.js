@@ -1,11 +1,32 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { createProduct, getSellerProduct } from "../services/product.api";
-import { setSellerProducts, setLoading, setError } from "../state/product.slice";
+import {
+    createProduct,
+    getSellerProduct,
+    getAllProducts,
+    getProductDetails,
+    addProductVariant,
+    updateVariantStock,
+    updateProductStock
+} from "../services/product.api";
+import {
+    setSellerProducts,
+    setAllProducts,
+    setCurrentProduct,
+    setLoading,
+    setError
+} from "../state/product.slice";
 
 export const useProduct = () => {
     const dispatch = useDispatch();
-    const { sellerProducts, loading: reduxLoading, error: reduxError } = useSelector((state) => state.product);
+    const {
+        allProducts = [],
+        sellerProducts = [],
+        currentProduct = null,
+        loading: reduxLoading,
+        error: reduxError
+    } = useSelector((state) => state.product);
+
     const [loading, setLocalLoading] = useState(false);
     const [error, setLocalError] = useState(null);
 
@@ -49,11 +70,103 @@ export const useProduct = () => {
         }
     };
 
+    const handleGetAllProducts = async () => {
+        setLocalLoading(true);
+        setLocalError(null);
+        dispatch(setLoading(true));
+        try {
+            const data = await getAllProducts();
+            const products = data.products || [];
+            dispatch(setAllProducts(products));
+            return products;
+        } catch (err) {
+            const errorMessage = err?.response?.data?.message || err?.message || "Failed to fetch catalog pieces";
+            setLocalError(errorMessage);
+            dispatch(setError(errorMessage));
+            throw err;
+        } finally {
+            setLocalLoading(false);
+            dispatch(setLoading(false));
+        }
+    };
+
+    const handleGetProductDetails = async (id) => {
+        setLocalLoading(true);
+        setLocalError(null);
+        dispatch(setLoading(true));
+        try {
+            const data = await getProductDetails(id);
+            dispatch(setCurrentProduct(data.product));
+            return data.product;
+        } catch (err) {
+            const errorMessage = err?.response?.data?.message || err?.message || "Failed to load product details";
+            setLocalError(errorMessage);
+            dispatch(setError(errorMessage));
+            throw err;
+        } finally {
+            setLocalLoading(false);
+            dispatch(setLoading(false));
+        }
+    };
+
+    const handleAddProductVariant = async (productId, formData) => {
+        setLocalLoading(true);
+        setLocalError(null);
+        try {
+            const data = await addProductVariant(productId, formData);
+            if (data?.product) {
+                dispatch(setCurrentProduct(data.product));
+            }
+            return data.product;
+        } catch (err) {
+            const errorMessage = err?.response?.data?.message || err?.message || "Failed to add product variant";
+            setLocalError(errorMessage);
+            throw err;
+        } finally {
+            setLocalLoading(false);
+        }
+    };
+
+    const handleUpdateVariantStock = async (productId, variantId, stock) => {
+        try {
+            const data = await updateVariantStock(productId, variantId, stock);
+            if (data?.product) {
+                dispatch(setCurrentProduct(data.product));
+            }
+            return data.product;
+        } catch (err) {
+            const errorMessage = err?.response?.data?.message || err?.message || "Failed to update variant stock";
+            setLocalError(errorMessage);
+            throw err;
+        }
+    };
+
+    const handleUpdateProductStock = async (productId, stock) => {
+        try {
+            const data = await updateProductStock(productId, stock);
+            if (data?.product) {
+                dispatch(setCurrentProduct(data.product));
+            }
+            return data.product;
+        } catch (err) {
+            const errorMessage = err?.response?.data?.message || err?.message || "Failed to update product stock";
+            setLocalError(errorMessage);
+            throw err;
+        }
+    };
+
     return {
         handleCreateProduct,
         handleGetSellerProduct,
+        handleGetAllProducts,
+        handleGetProductDetails,
+        handleAddProductVariant,
+        handleUpdateVariantStock,
+        handleUpdateProductStock,
         loading: loading || reduxLoading,
         error: error || reduxError,
+        allProducts,
         sellerProducts,
+        currentProduct,
     };
 };

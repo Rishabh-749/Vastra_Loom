@@ -1,2 +1,46 @@
 @import "tailwindcss";
 @import "@fontsource-variable/geist";
+
+/* ════════════════════════════════════════════════════════
+   HAUTE COUTURE LUXURY SCROLLBAR & SMOOTH SCROLL SYSTEM
+   Seamlessly blends with obsidian #080806 & imperial gold #C6A87C
+════════════════════════════════════════════════════════ */
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: dark;
+}
+
+/* Custom modern scrollbar for Chrome, Safari, Edge, Opera */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #080806;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #221e18;
+  border-radius: 9999px;
+  border: 1px solid rgba(198, 168, 124, 0.15);
+  transition: all 0.25s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C6A87C;
+  box-shadow: 0 0 10px rgba(198, 168, 124, 0.4);
+}
+
+/* Custom scrollbar for Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2b251d #080806;
+}
+
+/* Luxury text selection */
+::selection {
+  background-color: rgba(198, 168, 124, 0.35);
+  color: #fffaf0;
+}
