@@ -48,11 +48,19 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await handleLogin({
-      email: formData.email,
-      password: formData.password,
-    });
-    navigate("/");
+    try {
+      const loggedUser = await handleLogin({
+        email: formData.email,
+        password: formData.password,
+      });
+      if (loggedUser?.role === 'seller') {
+        navigate("/seller/dashboard");
+      } else {
+        navigate("/");
+      }
+    } catch {
+      // Error managed in useAuth / redux
+    }
   };
 
   return (

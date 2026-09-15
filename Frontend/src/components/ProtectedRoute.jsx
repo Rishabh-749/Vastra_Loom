@@ -6,25 +6,36 @@ import ShinyText from './ShinyText';
 
 /**
  * ProtectedRoute component for guarding privileged routes (e.g. Seller Studio).
- * If the user is not authenticated or lacks the required role, it renders an
- * informative, luxury access-denied page explaining exactly what is happening.
+ * If the user is not authenticated or lacks the required role, it prevents access
+ * and renders an informative, luxury access-denied page explaining exactly what is happening.
  * 
  * Props:
  * - children: ReactNode
  * - requiredRole: 'seller' | 'admin' | null (default: 'seller')
  */
 const ProtectedRoute = ({ children, requiredRole = 'seller' }) => {
-  const { user, handleCheckAuth } = useAuth();
-  const [isVerifying, setIsVerifying] = useState(!user);
+  const { user, handleCheckAuth, isAuthChecked } = useAuth();
+  const [isVerifying, setIsVerifying] = useState(!isAuthChecked);
 
   useEffect(() => {
-    // If no user in state, try checking active cookie session with backend
-    if (!user) {
-      handleCheckAuth().finally(() => setIsVerifying(false));
+    let isMounted = true;
+    if (!isAuthChecked) {
+      setIsVerifying(true);
+      handleCheckAuth()
+        .catch(() => {})
+        .finally(() => {
+          if (isMounted) {
+            setIsVerifying(false);
+          }
+        });
     } else {
       setIsVerifying(false);
     }
-  }, [user]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthChecked]);
 
   // Loading state while verifying token with backend
   if (isVerifying) {
@@ -62,7 +73,7 @@ const ProtectedRoute = ({ children, requiredRole = 'seller' }) => {
                 Authentication <ShinyText text="Required" color="#C6A87C" shineColor="#fff8e7" speed={3} />
               </h2>
               <p className="text-xs sm:text-sm text-[#8a8278] leading-relaxed">
-                You are not currently logged in. To publish creations to the <span className="text-gray-200 font-medium">VASTRA LOOM</span> catalog, you must sign in with a verified Seller account.
+                You are not logged in. Access to the <span className="text-gray-200 font-medium">VASTRA LOOM Seller Studio</span> is protected and requires an active seller session.
               </p>
             </div>
 
@@ -70,10 +81,10 @@ const ProtectedRoute = ({ children, requiredRole = 'seller' }) => {
             <div className="p-3.5 rounded-xl bg-[#0a0907] border border-[#231f1a] text-left text-xs space-y-1.5">
               <div className="flex items-center gap-2 text-[#C6A87C] font-semibold text-[11px] uppercase tracking-wider">
                 <i className="ri-information-line" />
-                Why am I seeing this?
+                Protected Route Notice
               </div>
               <p className="text-[11px] text-[#6e675f] leading-relaxed">
-                The Atelier Product Studio is a protected seller environment requiring an active authentication token.
+                This area contains confidential creator tools and catalog controls. An authenticated session is required to proceed.
               </p>
             </div>
 
@@ -141,7 +152,7 @@ const ProtectedRoute = ({ children, requiredRole = 'seller' }) => {
                 Permission Details
               </div>
               <p className="text-[11px] text-[#6e675f] leading-relaxed">
-                Product creation is restricted to verified VASTRA LOOM Sellers. Customer accounts cannot list or sell products in the catalog.
+                Access to the Seller Studio is restricted to verified VASTRA LOOM Sellers. Customer accounts cannot manage collections or list products.
               </p>
             </div>
 

@@ -84,10 +84,29 @@ const Navbar = ({
           {/* Seller Mode Specific Actions */}
           {isSellerMode ? (
             <div className="flex items-center gap-2 sm:gap-3">
-              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#12100d] border border-[#2a2520] text-[10px] font-mono uppercase tracking-wider text-[#C6A87C]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#C6A87C] animate-pulse" />
-                Seller Studio
-              </span>
+              {/* Quick Seller Navigation Tabs */}
+              <div className="hidden md:flex items-center gap-1.5 mr-2">
+                <Link
+                  to="/seller/dashboard"
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wider uppercase transition-colors ${
+                    location.pathname === '/seller/dashboard' || location.pathname === '/seller'
+                      ? 'bg-[#181511] text-[#C6A87C] border border-[#C6A87C]/40'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to="/seller/create-product"
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wider uppercase transition-colors ${
+                    location.pathname === '/seller/create-product'
+                      ? 'bg-[#181511] text-[#C6A87C] border border-[#C6A87C]/40'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Create Piece
+                </Link>
+              </div>
 
               {onClear && (
                 <button

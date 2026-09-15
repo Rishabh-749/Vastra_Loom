@@ -189,7 +189,7 @@ const CreateProduct = () => {
     try {
       await handleCreateProduct(payload);
       setSuccessMsg('Product created successfully!');
-      setTimeout(() => navigate('/'), 1400);
+      setTimeout(() => navigate('/seller/dashboard'), 1400);
     } catch (err) {
       // apiError is also synced in hook
     }

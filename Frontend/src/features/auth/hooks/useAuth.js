@@ -1,10 +1,10 @@
-import { setError, setUser, setLoading } from "../state/auth.slice";
+import { setError, setUser, setIsAuthChecked, setLoading } from "../state/auth.slice";
 import { register, login, getMe } from "../services/auth.api";
 import { useDispatch, useSelector } from "react-redux";
 
 export const useAuth = () => {
     const dispatch = useDispatch();
-    const { user, loading, error } = useSelector((state) => state.auth);
+    const { user, isAuthChecked, loading, error } = useSelector((state) => state.auth);
 
     const handleRegister = async ({ email, password, fullname, contact, isSeller = false }) => {
         dispatch(setLoading(true));
@@ -46,9 +46,10 @@ export const useAuth = () => {
             localStorage.setItem("user", JSON.stringify(data.user));
             dispatch(setUser(data.user));
             return data.user;
-        } catch {
+        } catch (err) {
             localStorage.removeItem("user");
             dispatch(setUser(null));
+            dispatch(setIsAuthChecked(true));
             return null;
         }
     };
@@ -56,10 +57,12 @@ export const useAuth = () => {
     const handleLogout = () => {
         localStorage.removeItem("user");
         dispatch(setUser(null));
+        dispatch(setIsAuthChecked(true));
     };
 
     return {
         user,
+        isAuthChecked,
         loading,
         error,
         handleRegister,
@@ -67,4 +70,4 @@ export const useAuth = () => {
         handleCheckAuth,
         handleLogout
     };
-}; 
+};

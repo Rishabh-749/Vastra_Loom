@@ -1,0 +1,771 @@
+import React, { useEffect, useState, useMemo } from 'react';
+import { Link } from 'react-router';
+import 'remixicon/fonts/remixicon.css';
+import Navbar from '../../../components/Navbar';
+import ShinyText from '../../../components/ShinyText';
+import { useProduct } from '../hooks/useProduct';
+import { useAuth } from '../../auth/hooks/useAuth';
+
+const formatCurrency = (amount = 0, currency = 'INR') => {
+  const symbols = { INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'AED ', CAD: 'CA$' };
+  const symbol = symbols[currency] || `${currency} `;
+  return `${symbol} ${Number(amount).toLocaleString('en-IN')}`;
+};
+
+const formatDate = (isoString) => {
+  if (!isoString) return 'Recent Drop';
+  const date = new Date(isoString);
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+
+const getImageUrl = (imageItem) => {
+  if (!imageItem) return '';
+  if (typeof imageItem === 'string') return imageItem;
+  return imageItem.url || '';
+};
+
+const ProductGridCard = ({ product, onInspect }) => {
+  const [imgError, setImgError] = useState(false);
+  const coverUrl = getImageUrl(product?.images?.[0]);
+  const imageCount = product?.images?.length || 0;
+
+  return (
+    <div className="group relative rounded-2xl bg-[#100f0d] border border-[#2a2520] hover:border-[#C6A87C]/50 transition-all duration-300 overflow-hidden flex flex-col justify-between shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_20px_40px_rgba(198,168,124,0.1)]">
+      {/* Image Showcase Container */}
+      <div className="relative aspect-[3/4] w-full bg-[#080806] overflow-hidden">
+        {coverUrl && !imgError ? (
+          <img
+            src={coverUrl}
+            alt={product.title}
+            loading="lazy"
+            className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-[#12100d] select-none">
+            <div className="w-12 h-12 rounded-xl bg-[#1c1914] border border-[#2a2520] flex items-center justify-center text-[#C6A87C] mb-2 shadow-inner">
+              <i className="ri-vip-crown-2-line text-xl" />
+            </div>
+            <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#C6A87C]">
+              VASTRA LOOM
+            </span>
+            <span className="text-xs text-[#8a8278] truncate max-w-full mt-1 font-medium">
+              {product.title}
+            </span>
+          </div>
+        )}
+
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#100f0d] via-transparent to-black/30 opacity-80 group-hover:opacity-90 transition-opacity pointer-events-none" />
+
+        {/* Badges Over Image */}
+        <div className="absolute top-3 inset-x-3 flex items-center justify-between z-10 pointer-events-none">
+          <span className="px-2.5 py-1 rounded-md bg-black/75 backdrop-blur-md border border-white/10 text-[9px] font-extrabold uppercase tracking-widest text-[#C6A87C]">
+            Vastra Loom
+          </span>
+
+          {imageCount > 1 && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/85 backdrop-blur-md text-gray-200 text-[10px] font-mono border border-[#3a342c] shadow-sm">
+              <i className="ri-image-2-line text-xs text-[#C6A87C]" />
+              {imageCount} Visuals
+            </span>
+          )}
+        </div>
+
+        {/* Hover Quick Action: Inspect Piece */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 bg-black/40 backdrop-blur-xs">
+          <button
+            type="button"
+            onClick={() => onInspect(product)}
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#e8d5aa] text-[#080806] text-xs font-bold uppercase tracking-wider shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <i className="ri-eye-line text-sm" />
+            Inspect Piece
+          </button>
+        </div>
+      </div>
+
+      {/* Product Details Section */}
+      <div className="p-5 space-y-3 relative z-10 bg-[#100f0d]">
+        <div className="flex items-center justify-between text-[11px] text-[#6e675f]">
+          <span className="font-mono">{formatDate(product.createdAt)}</span>
+          <span className="text-emerald-400 font-semibold flex items-center gap-1 text-[10px] uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Active
+          </span>
+        </div>
+
+        <div>
+          <h3 className="text-base font-semibold text-white tracking-tight line-clamp-1 group-hover:text-[#C6A87C] transition-colors">
+            {product.title}
+          </h3>
+          <p className="text-xs text-[#8a8278] line-clamp-2 mt-1 leading-relaxed">
+            {product.description}
+          </p>
+        </div>
+
+        {/* Price and Footer Row */}
+        <div className="pt-2 border-t border-[#231f1a] flex items-center justify-between">
+          <div>
+            <span className="text-xs text-[#6e675f] block font-mono text-[10px] uppercase">
+              Valuation
+            </span>
+            <span className="text-lg font-bold text-white tracking-tight font-mono">
+              {formatCurrency(product?.price?.amount, product?.price?.currency)}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onInspect(product)}
+            className="p-2 rounded-lg border border-[#2a2520] hover:border-[#C6A87C]/50 text-gray-400 hover:text-white transition-colors cursor-pointer"
+            title="View Details"
+          >
+            <i className="ri-arrow-right-up-line text-sm" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const Dashboard = () => {
+  const { user } = useAuth();
+  const { handleGetSellerProduct, loading, error, sellerProducts = [] } = useProduct();
+
+  // Local UI State
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('newest'); // 'newest' | 'price-desc' | 'price-asc' | 'title'
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
+  const [inspectProduct, setInspectProduct] = useState(null);
+  const [inspectImageIdx, setInspectImageIdx] = useState(0);
+  const [copiedId, setCopiedId] = useState(false);
+
+  // Fetch products on mount
+  useEffect(() => {
+    handleGetSellerProduct();
+  }, []);
+
+  // Compute Metrics
+  const metrics = useMemo(() => {
+    const totalCount = sellerProducts.length;
+    const totalValuation = sellerProducts.reduce((sum, item) => {
+      return sum + (Number(item?.price?.amount) || 0);
+    }, 0);
+    const avgPrice = totalCount > 0 ? Math.round(totalValuation / totalCount) : 0;
+    const totalImages = sellerProducts.reduce((sum, item) => {
+      return sum + (item?.images?.length || 0);
+    }, 0);
+
+    return { totalCount, totalValuation, avgPrice, totalImages };
+  }, [sellerProducts]);
+
+  // Filtered & Sorted Products
+  const filteredProducts = useMemo(() => {
+    let result = [...sellerProducts];
+
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      result = result.filter(
+        (p) =>
+          p.title?.toLowerCase().includes(q) ||
+          p.description?.toLowerCase().includes(q)
+      );
+    }
+
+    result.sort((a, b) => {
+      if (sortBy === 'newest') {
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      }
+      if (sortBy === 'price-desc') {
+        return (Number(b?.price?.amount) || 0) - (Number(a?.price?.amount) || 0);
+      }
+      if (sortBy === 'price-asc') {
+        return (Number(a?.price?.amount) || 0) - (Number(b?.price?.amount) || 0);
+      }
+      if (sortBy === 'title') {
+        return (a.title || '').localeCompare(b.title || '');
+      }
+      return 0;
+    });
+
+    return result;
+  }, [sellerProducts, searchTerm, sortBy]);
+
+  const handleCopyId = (id) => {
+    navigator.clipboard.writeText(id);
+    setCopiedId(true);
+    setTimeout(() => setCopiedId(false), 2000);
+  };
+
+  const handleOpenInspect = (product) => {
+    setInspectProduct(product);
+    setInspectImageIdx(0);
+  };
+
+  return (
+    <div className="min-h-screen w-full bg-[#080806] font-sans text-gray-100 flex flex-col selection:bg-[#C6A87C]/30 selection:text-[#fff8e7]">
+      {/* ── Top Navigation Bar ── */}
+      <Navbar variant="seller" subtitle="Atelier Dashboard" />
+
+      {/* ── Main Dashboard Workspace ── */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8">
+        
+        {/* ── Hero Welcome Strip ── */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-[#2a2520]">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#12100d] border border-[#2a2520] text-[10px] font-mono tracking-widest uppercase text-[#C6A87C]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#C6A87C] animate-pulse" />
+              <span>Atelier Creator Suite</span>
+              <span className="text-[#5a5651]">•</span>
+              <span>{user?.fullname || 'Verified Seller'}</span>
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-white tracking-tight leading-tight">
+              Curated Collections{' '}
+              <ShinyText
+                text="VASTRA LOOM"
+                color="#C6A87C"
+                shineColor="#fff8e7"
+                speed={3}
+                className="font-semibold"
+              />
+            </h1>
+            <p className="text-xs sm:text-sm text-[#8a8278] max-w-2xl leading-relaxed">
+              Manage your published high-fashion pieces, inspect media assets, monitor portfolio valuation, and launch new catalog drops.
+            </p>
+          </div>
+
+          {/* Quick Action Buttons */}
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={() => handleGetSellerProduct()}
+              disabled={loading}
+              title="Refresh collections"
+              className="p-3 rounded-xl border border-[#2a2520] hover:border-[#C6A87C]/50 bg-[#0d0c0b] text-gray-400 hover:text-white transition-colors cursor-pointer"
+            >
+              <i className={`ri-refresh-line text-base ${loading ? 'animate-spin text-[#C6A87C]' : ''}`} />
+            </button>
+
+            <Link
+              to="/seller/create-product"
+              className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#C6A87C] via-[#e8d5aa] to-[#C6A87C] text-[#080806] text-xs sm:text-sm font-bold tracking-wider uppercase shadow-[0_0_24px_rgba(198,168,124,0.25)] hover:shadow-[0_0_36px_rgba(198,168,124,0.4)] active:scale-[0.99] transition-all duration-300 flex items-center gap-2 cursor-pointer"
+            >
+              <i className="ri-add-line text-base font-bold" />
+              <span>New Creation</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* ── KPI Analytics Overview Cards ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          {/* Card 1: Total Pieces */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#100f0d] border border-[#2a2520] relative overflow-hidden group hover:border-[#C6A87C]/40 transition-colors">
+            <div className="flex items-center justify-between text-[#8a8278] text-xs">
+              <span className="uppercase font-semibold tracking-wider text-[10px]">Catalogued Pieces</span>
+              <div className="w-8 h-8 rounded-lg bg-[#181511] border border-[#2a2520] flex items-center justify-center text-[#C6A87C]">
+                <i className="ri-shirt-line text-sm" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl sm:text-3xl font-bold text-white tracking-tight font-sans">
+                {metrics.totalCount}
+              </span>
+              <span className="text-xs text-[#6e675f] ml-1.5 font-medium">Creations</span>
+            </div>
+          </div>
+
+          {/* Card 2: Portfolio Valuation */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#100f0d] border border-[#2a2520] relative overflow-hidden group hover:border-[#C6A87C]/40 transition-colors">
+            <div className="flex items-center justify-between text-[#8a8278] text-xs">
+              <span className="uppercase font-semibold tracking-wider text-[10px]">Portfolio Valuation</span>
+              <div className="w-8 h-8 rounded-lg bg-[#181511] border border-[#2a2520] flex items-center justify-center text-[#C6A87C]">
+                <i className="ri-money-dollar-circle-line text-sm" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl sm:text-3xl font-bold text-white tracking-tight font-mono">
+                ₹ {metrics.totalValuation.toLocaleString('en-IN')}
+              </span>
+            </div>
+          </div>
+
+          {/* Card 3: Average Price Point */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#100f0d] border border-[#2a2520] relative overflow-hidden group hover:border-[#C6A87C]/40 transition-colors">
+            <div className="flex items-center justify-between text-[#8a8278] text-xs">
+              <span className="uppercase font-semibold tracking-wider text-[10px]">Average Price Point</span>
+              <div className="w-8 h-8 rounded-lg bg-[#181511] border border-[#2a2520] flex items-center justify-center text-[#C6A87C]">
+                <i className="ri-price-tag-3-line text-sm" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl sm:text-3xl font-bold text-white tracking-tight font-mono">
+                ₹ {metrics.avgPrice.toLocaleString('en-IN')}
+              </span>
+              <span className="text-xs text-[#6e675f] ml-1.5 font-medium">/ item</span>
+            </div>
+          </div>
+
+          {/* Card 4: Curated Imagery */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#100f0d] border border-[#2a2520] relative overflow-hidden group hover:border-[#C6A87C]/40 transition-colors">
+            <div className="flex items-center justify-between text-[#8a8278] text-xs">
+              <span className="uppercase font-semibold tracking-wider text-[10px]">Curated Visuals</span>
+              <div className="w-8 h-8 rounded-lg bg-[#181511] border border-[#2a2520] flex items-center justify-center text-[#C6A87C]">
+                <i className="ri-image-2-line text-sm" />
+              </div>
+            </div>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-bold text-white tracking-tight font-sans">
+                {metrics.totalImages}
+              </span>
+              <span className="text-xs text-emerald-400 font-semibold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/40">
+                100% Live
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Search, Sort, and View Controls ── */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-3 rounded-2xl bg-[#0d0c0b] border border-[#2a2520]">
+          {/* Search Box */}
+          <div className="relative flex-1 group max-w-md">
+            <i className="ri-search-line absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5a5651] group-focus-within:text-[#C6A87C] transition-colors text-sm" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search pieces by title, fabric, or craft narrative..."
+              className="w-full pl-10 pr-9 py-2 bg-[#12100d] border border-[#2a2520] rounded-xl text-xs sm:text-sm text-gray-100 placeholder-[#4a4641] focus:outline-none focus:border-[#C6A87C]/70 transition-colors"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white cursor-pointer"
+              >
+                <i className="ri-close-line text-sm" />
+              </button>
+            )}
+          </div>
+
+          {/* Right Controls: Sort Dropdown & Layout Mode Toggle */}
+          <div className="flex items-center gap-3 self-end sm:self-auto">
+            {/* Sort Selector */}
+            <div className="relative">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="pl-3 pr-8 py-2 bg-[#12100d] border border-[#2a2520] rounded-xl text-xs font-medium text-gray-200 focus:outline-none focus:border-[#C6A87C]/70 transition-colors appearance-none cursor-pointer"
+              >
+                <option value="newest" className="bg-[#12100d]">Newest Drops</option>
+                <option value="price-desc" className="bg-[#12100d]">Price: High to Low</option>
+                <option value="price-asc" className="bg-[#12100d]">Price: Low to High</option>
+                <option value="title" className="bg-[#12100d]">Title: A to Z</option>
+              </select>
+              <i className="ri-arrow-down-s-line absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-xs" />
+            </div>
+
+            {/* Layout Toggle (Grid vs Table) */}
+            <div className="flex items-center p-1 rounded-xl bg-[#12100d] border border-[#2a2520]">
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                title="Cinematic Grid View"
+                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+                  viewMode === 'grid'
+                    ? 'bg-[#C6A87C] text-[#080806] shadow-sm'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <i className="ri-grid-fill text-xs" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                title="Studio Table View"
+                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+                  viewMode === 'table'
+                    ? 'bg-[#C6A87C] text-[#080806] shadow-sm'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <i className="ri-list-check-2 text-xs" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Error Notification Banner if any ── */}
+        {error && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-amber-950/30 border border-amber-800/40 text-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-900/40 border border-amber-700/50 flex items-center justify-center text-amber-400 shrink-0">
+                <i className="ri-shield-user-line text-sm" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-white">
+                  {error.toLowerCase().includes('unauthorized') ? 'Seller Authentication Required' : 'Catalogue Sync Notice'}
+                </h4>
+                <p className="text-[11px] text-[#a89d90] mt-0.5">
+                  {error.toLowerCase().includes('unauthorized')
+                    ? 'Please log in with your verified seller credentials to access and manage live atelier pieces.'
+                    : error}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {error.toLowerCase().includes('unauthorized') && (
+                <Link
+                  to="/login"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#e8d5aa] text-[#080806] text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-opacity"
+                >
+                  Sign In as Seller
+                </Link>
+              )}
+              <button
+                type="button"
+                onClick={() => handleGetSellerProduct()}
+                className="px-3 py-2 rounded-xl border border-[#2a2520] hover:border-[#C6A87C]/50 text-gray-300 hover:text-white bg-[#100f0d] text-xs transition-colors cursor-pointer"
+              >
+                Retry Sync
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Content View Area ── */}
+        {loading && sellerProducts.length === 0 ? (
+          /* Loading Skeletons */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((n) => (
+              <div
+                key={n}
+                className="rounded-2xl bg-[#100f0d] border border-[#2a2520] overflow-hidden animate-pulse aspect-[3/4] flex flex-col justify-between p-4"
+              >
+                <div className="w-full h-[60%] bg-[#1c1914] rounded-xl" />
+                <div className="space-y-3 pt-4">
+                  <div className="w-3/4 h-4 bg-[#1c1914] rounded" />
+                  <div className="w-1/2 h-3 bg-[#1c1914] rounded" />
+                  <div className="w-1/3 h-5 bg-[#1c1914] rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          /* Empty State */
+          <div className="py-20 flex flex-col items-center justify-center text-center p-6 rounded-2xl bg-[#100f0d]/60 border border-[#2a2520] space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-[#181511] border border-[#2a2520] flex items-center justify-center text-[#C6A87C] shadow-inner">
+              <i className="ri-archive-stack-line text-3xl" />
+            </div>
+            <div className="max-w-md space-y-1.5">
+              <h3 className="text-lg font-semibold text-white">
+                {searchTerm ? 'No Matching Creations Found' : 'No Creations Catalogued Yet'}
+              </h3>
+              <p className="text-xs text-[#8a8278] leading-relaxed">
+                {searchTerm
+                  ? `No pieces found matching "${searchTerm}". Try another keyword or clear the search filter.`
+                  : 'Your atelier portfolio is currently empty. Create and publish your first exclusive piece to VASTRA LOOM.'}
+              </p>
+            </div>
+            {searchTerm ? (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="px-4 py-2 rounded-xl border border-[#2a2520] hover:border-[#C6A87C]/50 text-xs text-gray-300 hover:text-white transition-colors cursor-pointer"
+              >
+                Clear Search
+              </button>
+            ) : (
+              <Link
+                to="/seller/create-product"
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#e8d5aa] text-[#080806] text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-md"
+              >
+                <i className="ri-add-line text-sm" />
+                Create First Product
+              </Link>
+            )}
+          </div>
+        ) : viewMode === 'grid' ? (
+          /* ── CINEMATIC EDITORIAL GRID ── */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
+            {filteredProducts.map((product) => (
+              <ProductGridCard
+                key={product._id}
+                product={product}
+                onInspect={handleOpenInspect}
+              />
+            ))}
+          </div>
+        ) : (
+          /* ── STUDIO TABLE / LIST VIEW ── */
+          <div className="rounded-2xl bg-[#100f0d] border border-[#2a2520] overflow-hidden shadow-lg">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-[#2a2520] bg-[#0a0907] text-[#8a8278] uppercase text-[10px] font-semibold tracking-wider">
+                    <th className="py-3.5 px-4 sm:px-6">Piece / Title</th>
+                    <th className="py-3.5 px-4">Valuation</th>
+                    <th className="py-3.5 px-4 hidden md:table-cell">Visuals</th>
+                    <th className="py-3.5 px-4 hidden sm:table-cell">Catalogued</th>
+                    <th className="py-3.5 px-4">Status</th>
+                    <th className="py-3.5 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#201d18]">
+                  {filteredProducts.map((product) => {
+                    const coverUrl = getImageUrl(product?.images?.[0]);
+                    return (
+                      <tr
+                        key={product._id}
+                        className="hover:bg-[#14120e] transition-colors group cursor-pointer"
+                        onClick={() => handleOpenInspect(product)}
+                      >
+                        {/* Piece & Title */}
+                        <td className="py-3.5 px-4 sm:px-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-14 rounded-lg bg-[#080806] overflow-hidden shrink-0 border border-[#2a2520] flex items-center justify-center">
+                              {coverUrl ? (
+                                <img
+                                  src={coverUrl}
+                                  alt={product.title}
+                                  loading="lazy"
+                                  className="w-full h-full object-cover object-top"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    if (e.currentTarget.nextSibling) {
+                                      e.currentTarget.nextSibling.style.display = 'flex';
+                                    }
+                                  }}
+                                />
+                              ) : null}
+                              <div
+                                style={{ display: coverUrl ? 'none' : 'flex' }}
+                                className="w-full h-full items-center justify-center bg-[#14120e] text-[#C6A87C]"
+                              >
+                                <i className="ri-vip-crown-2-line text-xs" />
+                              </div>
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="font-semibold text-white truncate max-w-xs sm:max-w-sm group-hover:text-[#C6A87C] transition-colors">
+                                {product.title}
+                              </h4>
+                              <span className="text-[10px] font-mono text-[#6e675f] truncate block">
+                                ID: {product._id}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Price */}
+                        <td className="py-3.5 px-4 font-mono font-bold text-white text-sm">
+                          {formatCurrency(product?.price?.amount, product?.price?.currency)}
+                        </td>
+
+                        {/* Images count */}
+                        <td className="py-3.5 px-4 hidden md:table-cell text-[#8a8278] font-mono">
+                          {product?.images?.length || 0} Photo{(product?.images?.length || 0) > 1 ? 's' : ''}
+                        </td>
+
+                        {/* Date */}
+                        <td className="py-3.5 px-4 hidden sm:table-cell text-[#6e675f] font-mono">
+                          {formatDate(product.createdAt)}
+                        </td>
+
+                        {/* Status */}
+                        <td className="py-3.5 px-4">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
+                            <span className="w-1 h-1 rounded-full bg-emerald-400" />
+                            Live
+                          </span>
+                        </td>
+
+                        {/* Action */}
+                        <td className="py-3.5 px-4 text-right">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenInspect(product);
+                            }}
+                            className="px-3 py-1.5 rounded-lg border border-[#2a2520] hover:border-[#C6A87C]/60 text-gray-300 hover:text-white bg-[#0d0c0b] text-[11px] font-medium transition-colors cursor-pointer"
+                          >
+                            Inspect
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+      </main>
+
+      {/* ══════════════════════════════════════════════════════════
+          CINEMATIC PRODUCT INSPECTION MODAL
+      ══════════════════════════════════════════════════════════ */}
+      {inspectProduct && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200"
+          onClick={() => setInspectProduct(null)}
+        >
+          <div
+            className="relative w-full max-w-4xl max-h-[90vh] rounded-2xl bg-[#0d0c0b] border border-[#2a2520] overflow-hidden shadow-[0_25px_70px_rgba(0,0,0,0.8)] flex flex-col md:flex-row"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setInspectProduct(null)}
+              className="absolute top-3 right-3 z-30 w-8 h-8 rounded-lg bg-black/60 hover:bg-[#1f1b15] border border-[#2a2520] text-gray-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <i className="ri-close-line text-lg" />
+            </button>
+
+            {/* Left Side: Photo Showcase */}
+            <div className="w-full md:w-1/2 bg-[#050504] p-5 flex flex-col justify-between">
+              {/* Active Image */}
+              <div className="relative aspect-[3/4] w-full rounded-xl overflow-hidden bg-black border border-[#231f1a] flex items-center justify-center">
+                {inspectProduct?.images?.[inspectImageIdx] ? (
+                  <img
+                    src={getImageUrl(inspectProduct.images[inspectImageIdx])}
+                    alt={inspectProduct.title}
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-gray-600 select-none">
+                    <i className="ri-vip-crown-2-line text-3xl text-[#C6A87C] mb-2" />
+                    <span className="text-xs uppercase tracking-widest text-gray-400">Vastra Loom Piece</span>
+                  </div>
+                )}
+                <div className="absolute top-3 left-3 px-2.5 py-1 rounded bg-[#C6A87C] text-[#080806] text-[10px] font-bold uppercase tracking-wider shadow">
+                  Visual #{inspectImageIdx + 1}
+                </div>
+              </div>
+
+              {/* Thumbnails if > 1 */}
+              {inspectProduct?.images?.length > 1 && (
+                <div className="flex gap-2 pt-3 overflow-x-auto">
+                  {inspectProduct.images.map((img, idx) => {
+                    const thumbUrl = getImageUrl(img);
+                    return (
+                      <button
+                        key={img._id || idx}
+                        type="button"
+                        onClick={() => setInspectImageIdx(idx)}
+                        className={`relative w-12 h-14 rounded-lg overflow-hidden border shrink-0 transition-all cursor-pointer ${
+                          idx === inspectImageIdx
+                            ? 'border-[#C6A87C] ring-1 ring-[#C6A87C] scale-105'
+                            : 'border-[#2a2520] opacity-60 hover:opacity-100'
+                        }`}
+                      >
+                        <img src={thumbUrl} alt="" className="w-full h-full object-cover" />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Right Side: Specifications & Metadata */}
+            <div className="w-full md:w-1/2 p-6 md:p-8 flex flex-col justify-between overflow-y-auto space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C6A87C]">
+                    Atelier Piece Details
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-tight">
+                    {inspectProduct.title}
+                  </h2>
+                </div>
+
+                {/* Price Display */}
+                <div className="p-3.5 rounded-xl bg-[#12100d] border border-[#231f1a] flex items-baseline justify-between">
+                  <span className="text-xs text-[#8a8278] uppercase font-semibold">Catalog Valuation</span>
+                  <span className="text-2xl font-bold text-white font-mono tracking-tight">
+                    {formatCurrency(inspectProduct?.price?.amount, inspectProduct?.price?.currency)}
+                  </span>
+                </div>
+
+                {/* Narrative Description */}
+                <div className="space-y-1.5">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-[#a0988e]">
+                    Garment Narrative
+                  </span>
+                  <p className="text-xs text-gray-300 leading-relaxed max-h-44 overflow-y-auto pr-1">
+                    {inspectProduct.description}
+                  </p>
+                </div>
+
+                {/* Metadata details */}
+                <div className="space-y-2.5 pt-2 border-t border-[#231f1a] text-xs text-[#8a8278]">
+                  <div className="flex items-center justify-between">
+                    <span>Catalogued Date:</span>
+                    <span className="font-mono text-gray-300">{formatDate(inspectProduct.createdAt)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Product ID:</span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyId(inspectProduct._id)}
+                      className="font-mono text-gray-300 hover:text-[#C6A87C] flex items-center gap-1 transition-colors cursor-pointer"
+                      title="Click to copy ID"
+                    >
+                      <span className="truncate max-w-[150px]">{inspectProduct._id}</span>
+                      <i className={copiedId ? 'ri-check-line text-emerald-400' : 'ri-file-copy-line'} />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Visual Assets:</span>
+                    <span className="font-mono text-gray-300">
+                      {inspectProduct?.images?.length || 0} Media Asset{(inspectProduct?.images?.length || 0) > 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Seller Reference:</span>
+                    <span className="font-mono text-[#6e675f] truncate max-w-[150px]">
+                      {inspectProduct.seller || user?._id || 'Verified Seller'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Close / Action footer */}
+              <div className="pt-4 border-t border-[#231f1a] flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setInspectProduct(null)}
+                  className="w-full py-2.5 rounded-xl border border-[#2a2520] hover:border-[#3a342c] text-xs font-semibold uppercase tracking-wider text-gray-300 hover:text-white bg-[#0d0c0b] transition-colors cursor-pointer"
+                >
+                  Close Inspection
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Footer ── */}
+      <footer className="w-full border-t border-[#1a1713] bg-[#050504] py-6 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#5a5651]">
+          <div className="flex items-center gap-2">
+            <i className="ri-vip-crown-2-line text-[#C6A87C]" />
+            <span className="font-semibold tracking-widest uppercase text-gray-400">
+              VASTRA LOOM Atelier
+            </span>
+          </div>
+          <p>© 2026 VASTRA LOOM Inc. High-fashion creator studio. All rights reserved.</p>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default Dashboard;

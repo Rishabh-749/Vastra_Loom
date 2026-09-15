@@ -1,32 +1,29 @@
-import {createSlice} from "@reduxjs/toolkit";
-
-const savedUser = (() => {
-    try {
-        return JSON.parse(localStorage.getItem("user") || "null");
-    } catch {
-        return null;
-    }
-})();
+import { createSlice } from "@reduxjs/toolkit";
 
 const authSlice = createSlice({
     name: "auth",
     initialState: {
-        user: savedUser,
+        user: null,
+        isAuthChecked: false,
         loading: false,
         error: null
     },
     reducers: {
-        setUser: (state, action) =>{
+        setUser: (state, action) => {
             state.user = action.payload;
+            state.isAuthChecked = true;
         },
-        setLoading: (state, action) =>{
+        setIsAuthChecked: (state, action) => {
+            state.isAuthChecked = action.payload;
+        },
+        setLoading: (state, action) => {
             state.loading = action.payload;
         },
-        setError: (state, action) =>{
+        setError: (state, action) => {
             state.error = action.payload;
         }
     }
-})
+});
 
-export const {setError, setUser, setLoading} = authSlice.actions;
+export const { setError, setUser, setIsAuthChecked, setLoading } = authSlice.actions;
 export default authSlice.reducer;

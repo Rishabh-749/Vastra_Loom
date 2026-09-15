@@ -7,7 +7,12 @@ const sendTokenResponse = async (user, res, message)=>{
         id: user._id
     },config.JWT_SECRET, {expiresIn: "7d"});
 
-    res.cookie("token", token);
+    res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    });
 
     res.status(201).json({
         message,
@@ -88,7 +93,12 @@ const googleCallback = async (req, res) =>{
         expiresIn: "7d"
     });
 
-    res.cookie("token", token);
+    res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    });
 
     res.redirect("http://localhost:5173/");
 }
@@ -123,7 +133,12 @@ const githubCallback = async (req, res) => {
         expiresIn: "7d"
     });
 
-    res.cookie("token", token);
+    res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    });
     res.redirect("http://localhost:5173/");
 }
 
