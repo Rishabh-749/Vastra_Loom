@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, Navigate } from "react-router";
 import Register from "@/features/auth/pages/Register";
 import Login from "@/features/auth/pages/Login";
 import CreateProduct from "@/features/product/pages/CreateProduct";
@@ -23,10 +23,6 @@ export const routes = createBrowserRouter([
         element: <ProductDetail />
     },
     {
-        path: "/products/:id",
-        element: <ProductDetail />
-    },
-    {
         path: "/register",
         element: (
             <PublicAuthRoute>
@@ -44,39 +40,28 @@ export const routes = createBrowserRouter([
     },
     {
         path: "/seller",
+        element: <ProtectedRoute requiredRole="seller" />,
         children: [
             {
                 index: true,
-                element: (
-                    <ProtectedRoute requiredRole="seller">
-                        <Dashboard />
-                    </ProtectedRoute>
-                )
+                element: <Dashboard />
             },
             {
-                path: "/seller/create-product",
-                element: (
-                    <ProtectedRoute requiredRole="seller">
-                        <CreateProduct />
-                    </ProtectedRoute>
-                )
+                path: "dashboard",
+                element: <Dashboard />
             },
             {
-                path: "/seller/dashboard",
-                element: (
-                    <ProtectedRoute requiredRole="seller">
-                        <Dashboard />
-                    </ProtectedRoute>
-                )
+                path: "create-product",
+                element: <CreateProduct />
             },
             {
-                path: "/seller/product/:id",
-                element: (
-                    <ProtectedRoute requiredRole="seller">
-                        <ProductDetail />
-                    </ProtectedRoute>
-                )
+                path: "product/:id",
+                element: <ProductDetail />
             }
         ]
+    },
+    {
+        path: "*",
+        element: <Navigate to="/" replace />
     }
 ]);

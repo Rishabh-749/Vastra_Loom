@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, Navigate } from 'react-router';
+import { Link, Navigate, Outlet } from 'react-router';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import Navbar from './Navbar';
 import ShinyText from './ShinyText';
@@ -128,8 +128,8 @@ const ProtectedRoute = ({ children, requiredRole = 'seller' }) => {
     return <Navigate to="/" replace />;
   }
 
-  // ── Authorized: Render Child Component ──
-  return children;
+  // ── Authorized: Render Child Component or Nested Outlet ──
+  return children || <Outlet />;
 };
 
 export default ProtectedRoute;
