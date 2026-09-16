@@ -7,9 +7,8 @@ import { useAuth } from '../../auth/hooks/useAuth';
 import { getImageUrl } from '../../../utils/image';
 
 const formatCurrency = (amount = 0, currency = 'INR') => {
-  const symbols = { INR: '₹ ', USD: '$ ', EUR: '€ ', GBP: '£ ' };
-  const symbol = symbols[currency] || `${currency} `;
-  return `${symbol}${Number(amount).toLocaleString('en-IN')}`;
+  const code = currency?.toUpperCase() === 'INR' ? 'INR' : currency;
+  return `${code} ${Number(amount).toLocaleString('en-IN')}`;
 };
 
 // Safe helper to extract attribute map from a variant
@@ -28,8 +27,6 @@ const getVariantAttributes = (variant) => {
   }
 };
 
-const COMMON_ATTRIBUTE_TAGS = ['Color', 'Size', 'Storage', 'Material', 'Fit', 'Edition'];
-
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -44,7 +41,7 @@ const ProductDetail = () => {
     error: apiError,
   } = useProduct();
 
-  // Selected Variant (null = base authentic product by default, never auto-selects!)
+  // Active Variant State (null strictly = Authentic Base Product by default)
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [imgLoadError, setImgLoadError] = useState(false);
@@ -58,7 +55,7 @@ const ProductDetail = () => {
   const [bagToast, setBagToast] = useState(null);
   const [stockFeedback, setStockFeedback] = useState(null);
 
-  // Seller stock management
+  // Seller stock management state
   const [baseStockInput, setBaseStockInput] = useState(0);
   const [variantStockInputs, setVariantStockInputs] = useState({});
   const [isUpdatingStock, setIsUpdatingStock] = useState(false);
@@ -75,7 +72,7 @@ const ProductDetail = () => {
   const [variantModalError, setVariantModalError] = useState('');
   const [isSubmittingVariant, setIsSubmittingVariant] = useState(false);
 
-  // Fetch product on mount or id change, strictly resetting selectedVariant to null
+  // Fetch product on mount or id change
   useEffect(() => {
     setSelectedVariant(null);
     setActiveImageIndex(0);
@@ -99,7 +96,7 @@ const ProductDetail = () => {
     }
   }, [currentProduct]);
 
-  // Reset active image index and image load error when variant changes
+  // Reset image index when variant changes
   useEffect(() => {
     setActiveImageIndex(0);
     setImgLoadError(false);
@@ -113,9 +110,74 @@ const ProductDetail = () => {
     (user._id === (currentProduct.seller._id || currentProduct.seller));
   const canManageVariants = isSeller || isProductOwner;
 
-  // Active Images:
-  // If user selected a variant and that variant has provided images, SHOW ONLY THAT VARIANT'S IMAGES!
-  // If variant has no custom images or no variant is selected, show base product images.
+  // Available variants from backend
+  const availableVariants = useMemo(() => {
+    return currentProduct?.variants || [];
+  }, [currentProduct]);
+
+  // Base piece label (e.g. "Ivory (Original)")
+  const baseOptionLabel = useMemo(() => {
+    if (!currentProduct?.title) return 'Original Piece';
+    const firstWord = currentProduct.title.split(' ')[0];
+    return `${firstWord} (Original)`;
+  }, [currentProduct]);
+
+  // Build clean, intuitive list of all selectable options:
+  // Option 0: Base Original Piece (active by default!)
+  // Option 1..N: Each created variant with its primary label
+  const variantOptions = useMemo(() => {
+    const options = [
+      {
+        id: 'base',
+        label: baseOptionLabel,
+        isBase: true,
+        variant: null,
+        price: currentProduct?.price?.amount,
+        currency: currentProduct?.price?.currency || 'INR',
+        stock: currentProduct?.stock || 0,
+        attributes: { Edition: 'Original Base Piece' },
+      },
+    ];
+
+    availableVariants.forEach((v, idx) => {
+      const attrs = getVariantAttributes(v);
+      let label = '';
+      if (attrs.Color) {
+        label = attrs.Color;
+      } else if (attrs.Size) {
+        label = `Size ${attrs.Size}`;
+      } else {
+        label = Object.values(attrs).join(' • ') || `Variant #${idx + 1}`;
+      }
+
+      options.push({
+        id: v._id || `variant-${idx}`,
+        label,
+        isBase: false,
+        variant: v,
+        price: v.price?.amount || currentProduct?.price?.amount,
+        currency: v.price?.currency || currentProduct?.price?.currency || 'INR',
+        stock: v.stock ?? 0,
+        attributes: attrs,
+      });
+    });
+
+    return options;
+  }, [baseOptionLabel, currentProduct, availableVariants]);
+
+  // Attributes belonging ONLY to the currently active variant (no mixing!)
+  const currentActiveAttributes = useMemo(() => {
+    if (selectedVariant) {
+      return getVariantAttributes(selectedVariant);
+    }
+    return {
+      Edition: 'Atelier Master Piece',
+      Craft: 'Pure Handloom',
+      Weave: 'Chanderi Silk',
+    };
+  }, [selectedVariant]);
+
+  // Active Images: If variant has images, display ONLY that variant's images!
   const activeImages = useMemo(() => {
     if (selectedVariant && selectedVariant.images && selectedVariant.images.length > 0) {
       const validImages = selectedVariant.images.filter((img) => Boolean(getImageUrl(img)));
@@ -126,7 +188,7 @@ const ProductDetail = () => {
     return currentProduct?.images || [];
   }, [selectedVariant, currentProduct]);
 
-  // Active Price: Use variant price if selected, otherwise base product price
+  // Active Price: Variant price if variant selected, else base product price
   const activePrice = useMemo(() => {
     if (selectedVariant && selectedVariant.price?.amount !== undefined) {
       return selectedVariant.price.amount;
@@ -141,7 +203,7 @@ const ProductDetail = () => {
     return currentProduct?.price?.currency || 'INR';
   }, [selectedVariant, currentProduct]);
 
-  // Active Stock: Use variant stock if selected, otherwise base product stock
+  // Active Stock: Variant stock if variant selected, else base product stock
   const activeStock = useMemo(() => {
     if (selectedVariant) {
       return selectedVariant.stock ?? 0;
@@ -149,8 +211,8 @@ const ProductDetail = () => {
     return currentProduct?.stock ?? 0;
   }, [selectedVariant, currentProduct]);
 
-  // Primary image URL with graceful fallback
-  const primaryImageUrl = useMemo(() => {
+  // Hero image URL
+  const heroImageUrl = useMemo(() => {
     if (imgLoadError) {
       return getImageUrl(currentProduct?.images?.[0], 1200) || '';
     }
@@ -162,22 +224,8 @@ const ProductDetail = () => {
     return url;
   }, [activeImages, activeImageIndex, imgLoadError, currentProduct]);
 
-  // Available variants list
-  const availableVariants = useMemo(() => {
-    return currentProduct?.variants || [];
-  }, [currentProduct]);
-
-  // Toggle variant selection: click selects, click again deselects to base product
-  const handleToggleVariant = (variant) => {
-    if (selectedVariant?._id === variant._id) {
-      setSelectedVariant(null);
-    } else {
-      setSelectedVariant(variant);
-    }
-  };
-
   // Customer Actions
-  const handleAddToBag = () => {
+  const handleAddToCart = () => {
     if (!user) {
       setAuthPromptProduct(currentProduct);
       return;
@@ -197,7 +245,7 @@ const ProductDetail = () => {
     setPurchaseSuccessProduct(currentProduct);
   };
 
-  // Seller Stock Updates
+  // Seller stock updates
   const handleSaveBaseStock = async () => {
     setIsUpdatingStock(true);
     setStockFeedback(null);
@@ -228,7 +276,7 @@ const ProductDetail = () => {
   };
 
   // Add Variant Form actions
-  const handleAddAttribute = () => {
+  const handleAddAttributeToDraft = () => {
     if (!variantAttrKey.trim() || !variantAttrVal.trim()) return;
     setVariantAttributes((prev) => ({
       ...prev,
@@ -239,7 +287,7 @@ const ProductDetail = () => {
     setVariantModalError('');
   };
 
-  const handleRemoveAttribute = (k) => {
+  const handleRemoveAttributeFromDraft = (k) => {
     setVariantAttributes((prev) => {
       const copy = { ...prev };
       delete copy[k];
@@ -272,7 +320,7 @@ const ProductDetail = () => {
     setVariantModalError('');
 
     if (Object.keys(variantAttributes).length === 0) {
-      setVariantModalError('Please define at least one attribute (e.g. Color, Size, Edition)');
+      setVariantModalError('Please define at least one attribute (e.g. Color, Size)');
       return;
     }
 
@@ -302,7 +350,6 @@ const ProductDetail = () => {
       setStockFeedback('New variant crafted successfully');
       setTimeout(() => setStockFeedback(null), 3000);
 
-      // If a new variant was crafted, automatically activate that new variant to preview it
       if (updated?.variants?.length > 0) {
         const newest = updated.variants[updated.variants.length - 1];
         setSelectedVariant(newest);
@@ -317,14 +364,14 @@ const ProductDetail = () => {
   // Loading & Error States
   if (apiLoading && !currentProduct) {
     return (
-      <div className="min-h-screen w-full bg-[#08080a] flex flex-col items-center justify-center font-sans text-gray-100">
+      <div className="min-h-screen w-full bg-[#080806] flex flex-col items-center justify-center font-sans text-gray-100">
         <Navbar variant={isSeller ? 'seller' : 'default'} subtitle="Piece Details" />
         <div className="flex-1 flex flex-col items-center justify-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-[#131317] border border-[#23232c] flex items-center justify-center text-[#C6A87C] animate-pulse">
+          <div className="w-10 h-10 rounded-2xl bg-[#14120e] border border-[#2a2520] flex items-center justify-center text-[#C6A87C] animate-pulse">
             <i className="ri-vip-crown-2-line text-xl" />
           </div>
-          <span className="text-[11px] uppercase tracking-[0.2em] text-[#C6A87C] font-medium">
-            Loading Atelier Piece...
+          <span className="text-[11px] uppercase tracking-[0.25em] text-[#C6A87C] font-medium">
+            Loading Haute Couture Piece...
           </span>
         </div>
       </div>
@@ -333,14 +380,14 @@ const ProductDetail = () => {
 
   if (apiError && !currentProduct) {
     return (
-      <div className="min-h-screen w-full bg-[#08080a] flex flex-col font-sans text-gray-100">
+      <div className="min-h-screen w-full bg-[#080806] flex flex-col font-sans text-gray-100">
         <Navbar variant={isSeller ? 'seller' : 'default'} subtitle="Piece Details" />
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
           <h2 className="text-xl font-bold text-white mb-2">Piece Not Found</h2>
-          <p className="text-xs text-[#8a8278] max-w-sm mb-4">{apiError}</p>
+          <p className="text-xs text-[#8a8278] max-w-sm mb-6">{apiError}</p>
           <Link
             to={isSeller ? '/seller/dashboard' : '/'}
-            className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#08080a] font-bold text-xs uppercase tracking-wider"
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-xs uppercase tracking-wider"
           >
             Return to {isSeller ? 'Dashboard' : 'Catalog'}
           </Link>
@@ -352,14 +399,17 @@ const ProductDetail = () => {
   if (!currentProduct) return null;
 
   return (
-    <div className="min-h-screen lg:h-screen w-full bg-[#08080a] font-sans text-gray-100 flex flex-col lg:overflow-hidden selection:bg-[#C6A87C]/30 selection:text-[#fff8e7]">
-      {/* ── Fixed Minimalist Navigation Bar ── */}
-      <Navbar variant={isSeller ? 'seller' : 'default'} subtitle={isSeller ? 'Atelier Studio' : 'Haute Couture'} />
+    <div className="min-h-screen lg:h-screen w-full bg-[#080806] font-sans text-gray-100 flex flex-col lg:overflow-hidden selection:bg-[#C6A87C]/30 selection:text-[#fff8e7]">
+      {/* ── Fixed Header ── */}
+      <Navbar
+        variant={isSeller ? 'seller' : 'default'}
+        subtitle={isSeller ? 'Atelier Studio' : 'Haute Couture'}
+      />
 
       {/* ── Toast Notifications ── */}
       {bagToast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#121216] border border-[#C6A87C]/60 text-white text-xs px-4 py-3 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="w-5 h-5 rounded-full bg-[#C6A87C] text-[#08080a] flex items-center justify-center font-bold text-xs">
+        <div className="fixed bottom-6 right-6 z-50 bg-[#14120e] border border-[#C6A87C]/60 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="w-5 h-5 rounded-full bg-[#C6A87C] text-[#080806] flex items-center justify-center font-bold text-xs">
             <i className="ri-check-line" />
           </div>
           <div>
@@ -376,42 +426,27 @@ const ProductDetail = () => {
         </div>
       )}
 
-      {/* ── Main Viewport Container (Single Screen on Desktop) ── */}
-      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-3 lg:py-5 flex flex-col lg:overflow-hidden">
+      {/* ── Main Viewport Container (Centered, balanced margins on all 4 sides, fits in 1 screen) ── */}
+      <div className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 flex flex-col justify-center lg:overflow-hidden">
         
-        {/* Top Breadcrumb & Seller Studio Button */}
-        <div className="flex items-center justify-between pb-3 border-b border-[#1b1b22] shrink-0 text-xs">
-          <div className="flex items-center gap-2 text-[#8a8894]">
-            <Link
-              to={isSeller ? '/seller/dashboard' : '/'}
-              className="hover:text-[#C6A87C] transition-colors flex items-center gap-1"
-            >
-              <i className="ri-arrow-left-s-line" />
-              <span>{isSeller ? 'Atelier Dashboard' : 'Atelier Catalog'}</span>
-            </Link>
-            <span className="text-[#353540]">/</span>
-            <span className="text-gray-300 font-medium truncate max-w-xs sm:max-w-md">
-              {currentProduct.title}
-            </span>
-            {selectedVariant && (
-              <>
-                <span className="text-[#353540]">/</span>
-                <span className="text-[#C6A87C] font-semibold flex items-center gap-1">
-                  <i className="ri-palette-line text-xs" />
-                  {Object.values(getVariantAttributes(selectedVariant)).join(' • ')}
-                </span>
-              </>
-            )}
-          </div>
+        {/* Subtle top bar: Left Back Button + Right Seller Inventory Button (No separate wide breadcrumb row!) */}
+        <div className="flex items-center justify-between pb-2 shrink-0">
+          <Link
+            to={isSeller ? '/seller/dashboard' : '/'}
+            className="inline-flex items-center gap-1.5 text-xs text-[#8a8278] hover:text-[#C6A87C] transition-colors uppercase tracking-wider font-medium"
+          >
+            <i className="ri-arrow-left-line text-sm" />
+            <span>Back to {isSeller ? 'Dashboard' : 'Catalog'}</span>
+          </Link>
 
           {canManageVariants && (
             <button
               type="button"
               onClick={() => setIsSellerDrawerOpen(true)}
-              className="px-3.5 py-1.5 rounded-full bg-[#141418] border border-[#C6A87C]/50 hover:bg-[#C6A87C] hover:text-[#08080a] text-[#C6A87C] font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+              className="px-3 py-1 rounded-full bg-[#14120e] border border-[#C6A87C]/50 hover:bg-[#C6A87C] hover:text-[#080806] text-[#C6A87C] font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
             >
               <i className="ri-equalizer-line" />
-              <span>Seller Inventory Studio</span>
+              <span>Seller Inventory</span>
               {availableVariants.length > 0 && (
                 <span className="ml-1 px-1.5 py-0.2 rounded-full bg-[#C6A87C]/20 border border-[#C6A87C]/40 text-[10px] font-mono">
                   {availableVariants.length}
@@ -421,79 +456,20 @@ const ProductDetail = () => {
           )}
         </div>
 
-        {/* ── Two-Column Layout (Gallery 55% | Product Details 45%) ── */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 pt-4 lg:overflow-hidden items-stretch">
+        {/* ── Perfectly Aligned Two-Column Stage (Same Height, Perfectly Balanced) ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch lg:h-[calc(100vh-6.5rem)] lg:max-h-[540px]">
           
-          {/* ══════════════════════════════════════════════════════════
-              LEFT COLUMN: LUXURY ATELIER GALLERY
-              Shows variant's images if variant is active, else base images!
-          ══════════════════════════════════════════════════════════ */}
-          <div className="lg:col-span-6 xl:col-span-7 flex flex-col justify-between h-full lg:max-h-[calc(100vh-9.5rem)] lg:overflow-hidden">
-            {/* Primary Image Frame */}
-            <div className="relative flex-1 w-full rounded-2xl bg-[#0e0e11] border border-[#1e1e24] overflow-hidden shadow-2xl flex items-center justify-center group min-h-[360px] lg:min-h-0">
-              {primaryImageUrl ? (
-                <img
-                  src={primaryImageUrl}
-                  alt={currentProduct.title}
-                  onError={() => setImgLoadError(true)}
-                  className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center p-8 text-center text-[#555360]">
-                  <i className="ri-vip-crown-2-line text-3xl mb-2 text-[#C6A87C]" />
-                  <span className="text-xs uppercase tracking-widest text-[#C6A87C] font-semibold">
-                    VASTRA LOOM
-                  </span>
-                  <span className="text-[11px] text-[#7a7888] mt-1">{currentProduct.title}</span>
-                </div>
-              )}
-
-              {/* Top Vignette Badge */}
-              <div className="absolute top-4 left-4 z-10 pointer-events-none">
-                <span className="px-3 py-1 rounded-md bg-black/80 backdrop-blur-md border border-[#C6A87C]/30 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#C6A87C]">
-                  VASTRA LOOM
-                </span>
-              </div>
-
-              {/* Active Variant Indicator Overlay */}
-              {selectedVariant && (
-                <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-md bg-[#C6A87C] text-[#08080a] text-[10px] font-bold uppercase tracking-wider shadow flex items-center gap-1">
-                    <i className="ri-check-line" />
-                    Variant: {Object.values(getVariantAttributes(selectedVariant)).join(' / ')}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedVariant(null)}
-                    className="w-6 h-6 rounded-full bg-black/80 hover:bg-black text-gray-300 hover:text-white flex items-center justify-center cursor-pointer text-xs border border-white/20 transition-colors"
-                    title="View Base Original Piece"
-                  >
-                    <i className="ri-close-line" />
-                  </button>
-                </div>
-              )}
-
-              {/* Bottom Stock Indicator */}
-              <div className="absolute bottom-4 left-4 z-10 pointer-events-none">
-                {activeStock > 0 ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-black/80 backdrop-blur-md border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    In Stock ({activeStock} unit{activeStock > 1 ? 's' : ''} available)
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-black/80 backdrop-blur-md border border-rose-500/30 text-rose-400 text-xs font-semibold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-                    Made to Order / Bespoke Creation
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Thumbnail Carousel (Shows only the active edition's photos!) */}
+          {/* ════════════════════════════════════════════════════════════════
+              LEFT COLUMN: VERTICAL THUMBNAILS + LARGE HERO IMAGE
+              Matching height with right column!
+          ════════════════════════════════════════════════════════════════ */}
+          <div className="lg:col-span-6 xl:col-span-7 flex flex-row gap-3 items-stretch h-full overflow-hidden">
+            
+            {/* 1. Vertical Thumbnail Rail on the Far Left */}
             {activeImages && activeImages.length > 1 && (
-              <div className="flex items-center gap-2.5 pt-3 overflow-x-auto pb-1 shrink-0 scrollbar-none">
+              <div className="flex flex-col gap-2 shrink-0 overflow-y-auto max-h-full scrollbar-none w-14 sm:w-16">
                 {activeImages.map((img, idx) => {
-                  const thumb = getImageUrl(img, 300);
+                  const thumb = getImageUrl(img, 200);
                   const isActive = activeImageIndex === idx;
                   return (
                     <button
@@ -503,10 +479,10 @@ const ProductDetail = () => {
                         setActiveImageIndex(idx);
                         setImgLoadError(false);
                       }}
-                      className={`relative w-14 h-16 rounded-xl overflow-hidden border shrink-0 transition-all cursor-pointer ${
+                      className={`relative aspect-[3/4] w-full rounded-lg bg-[#0e0c0a] overflow-hidden transition-all cursor-pointer ${
                         isActive
-                          ? 'border-[#C6A87C] ring-2 ring-[#C6A87C]/50 opacity-100 scale-105 shadow-md'
-                          : 'border-[#202028] opacity-50 hover:opacity-100 hover:border-[#C6A87C]/40'
+                          ? 'border-2 border-[#C6A87C] opacity-100 shadow-md scale-[1.02]'
+                          : 'border border-[#24201a] opacity-50 hover:opacity-90 hover:border-[#C6A87C]/40'
                       }`}
                     >
                       <img
@@ -519,240 +495,292 @@ const ProductDetail = () => {
                 })}
               </div>
             )}
+
+            {/* 2. Primary Hero Image Frame */}
+            <div className="relative flex-1 w-full h-full rounded-2xl bg-[#0d0c0a] border border-[#201c17] overflow-hidden shadow-2xl flex items-center justify-center group min-h-[280px] lg:min-h-0">
+              {heroImageUrl ? (
+                <img
+                  src={heroImageUrl}
+                  alt={currentProduct.title}
+                  onError={() => setImgLoadError(true)}
+                  className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center p-8 text-center text-[#554e44]">
+                  <i className="ri-vip-crown-2-line text-3xl mb-2 text-[#C6A87C]" />
+                  <span className="text-xs uppercase tracking-widest text-[#C6A87C] font-semibold">
+                    VASTRA LOOM
+                  </span>
+                  <span className="text-[11px] text-[#7a7267] mt-1">{currentProduct.title}</span>
+                </div>
+              )}
+
+              {/* Discreet Brand Badge */}
+              <div className="absolute top-3 left-3 z-10 pointer-events-none">
+                <span className="px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md border border-[#C6A87C]/30 text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#C6A87C]">
+                  VASTRA LOOM
+                </span>
+              </div>
+
+              {/* Active Variant Indicator Overlay */}
+              {selectedVariant && (
+                <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5">
+                  <span className="px-2.5 py-1 rounded-md bg-[#C6A87C] text-[#080806] text-[10px] font-bold uppercase tracking-wider shadow">
+                    Variant Active
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedVariant(null)}
+                    className="w-6 h-6 rounded-full bg-black/80 hover:bg-black text-gray-300 hover:text-white flex items-center justify-center cursor-pointer text-xs border border-white/20 transition-colors"
+                    title="View Original Piece"
+                  >
+                    <i className="ri-close-line" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* ══════════════════════════════════════════════════════════
-              RIGHT COLUMN: SEAMLESS PRODUCT INFORMATION & CONTROLS
-          ══════════════════════════════════════════════════════════ */}
-          <div className="lg:col-span-6 xl:col-span-5 flex flex-col justify-between h-full lg:max-h-[calc(100vh-9.5rem)] lg:overflow-y-auto pr-1 space-y-4 scrollbar-thin scrollbar-thumb-[#1f1f26]">
+          {/* ════════════════════════════════════════════════════════════════
+              RIGHT COLUMN: SEAMLESS PRODUCT INFORMATION & ATTRIBUTES
+              Matching height with left column, perfectly balanced!
+          ════════════════════════════════════════════════════════════════ */}
+          <div className="lg:col-span-6 xl:col-span-5 flex flex-col justify-between h-full py-1 space-y-2.5 overflow-y-auto pr-1 no-scrollbar">
             
-            {/* 1. Header: Brand, Title, Artisan */}
-            <div className="space-y-1.5">
+            {/* 1. Header: Brand, Title, Price */}
+            <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#C6A87C] flex items-center gap-1">
-                  <i className="ri-vip-crown-fill text-xs" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C6A87C] flex items-center gap-1">
+                  <i className="ri-vip-crown-fill text-[10px]" />
                   HAUTE COUTURE BESPOKE
                 </span>
-
-                <span className="text-[11px] text-[#6d6a78] font-mono">
+                <span className="text-[10px] text-[#6e675f] font-mono">
                   Ref: {currentProduct._id?.slice(-8)}
                 </span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-snug">
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-snug">
                 {currentProduct.title}
               </h1>
 
-              {currentProduct.seller && (
-                <p className="text-xs text-[#9591a0]">
-                  Artisanal craftsmanship by{' '}
-                  <span className="text-gray-200 font-semibold">
-                    {currentProduct.seller.fullname || 'Master Artisan'}
-                  </span>
-                </p>
-              )}
-            </div>
-
-            {/* 2. Valuation Card (Clean, elegant, transparent) */}
-            <div className="p-4 rounded-2xl bg-[#111115] border border-[#202028] flex items-baseline justify-between">
-              <div>
-                <span className="text-[10px] uppercase tracking-widest text-[#7a7788] block mb-0.5">
-                  {selectedVariant ? 'Variant Valuation' : 'Atelier Valuation'}
+              {/* Price Row */}
+              <div className="pt-0.5 flex items-baseline gap-2.5">
+                <span className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight">
+                  {formatCurrency(activePrice, activeCurrency)}
                 </span>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl sm:text-3xl font-bold text-white font-mono tracking-tight">
-                    {formatCurrency(activePrice, activeCurrency)}
-                  </span>
-
-                  {selectedVariant && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedVariant(null)}
-                      className="text-[10px] text-[#C6A87C] hover:underline cursor-pointer font-medium ml-1"
-                    >
-                      (Reset to base {formatCurrency(currentProduct.price.amount, currentProduct.price.currency)})
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div className="text-right">
-                <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold block">
-                  Complimentary Express Delivery
-                </span>
-                <span className="text-[10px] text-[#6e6b7c]">Taxes & Duties Included</span>
-              </div>
-            </div>
-
-            {/* 3. TAILORED VARIANTS SELECTOR (Clean, intuitive, Original Piece is default!) */}
-            {availableVariants.length > 0 && (
-              <div className="space-y-2 pt-1 border-t border-[#1b1b22]">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-gray-200 flex items-center gap-1.5">
-                    <i className="ri-palette-line text-[#C6A87C]" />
-                    Select Edition / Variant
-                  </span>
-
-                  {selectedVariant ? (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedVariant(null)}
-                      className="text-[11px] text-[#C6A87C] hover:underline cursor-pointer flex items-center gap-1 font-medium"
-                    >
-                      <i className="ri-refresh-line" /> View Original Base Piece
-                    </button>
-                  ) : (
-                    <span className="text-[10px] text-emerald-400 font-mono">
-                      ✓ Original Piece Active
-                    </span>
-                  )}
-                </div>
-
-                {/* Variant Chips Grid (Includes explicit Original Piece + All Variants) */}
-                <div className="flex flex-wrap gap-2">
-                  {/* Option 1: Original Base Piece */}
+                {selectedVariant && (
                   <button
                     type="button"
                     onClick={() => setSelectedVariant(null)}
-                    className={`px-3.5 py-2 rounded-xl border text-xs font-medium transition-all cursor-pointer flex items-center gap-2 ${
-                      selectedVariant === null
-                        ? 'bg-[#1b1914] border-[#C6A87C] text-white shadow-[0_0_15px_rgba(198,168,124,0.2)] ring-1 ring-[#C6A87C]'
-                        : 'bg-[#111115] border-[#22222a] text-gray-400 hover:border-[#C6A87C]/50 hover:text-white'
-                    }`}
+                    className="text-[11px] text-[#C6A87C] hover:underline cursor-pointer font-medium"
                   >
-                    <span className={selectedVariant === null ? 'text-[#C6A87C] font-semibold' : ''}>
-                      Original Piece
-                    </span>
-                    <span className="text-[10px] font-mono text-[#8a8894] pl-1 border-l border-[#262630]">
-                      {formatCurrency(currentProduct.price.amount, currentProduct.price.currency)}
-                    </span>
+                    (View Original {formatCurrency(currentProduct.price.amount, currentProduct.price.currency)})
                   </button>
-
-                  {/* Option 2...N: Custom Crafted Variants */}
-                  {availableVariants.map((v, idx) => {
-                    const attrs = getVariantAttributes(v);
-                    const isSelected = selectedVariant?._id === v._id;
-                    const attrSummary = Object.entries(attrs)
-                      .map(([k, val]) => `${k}: ${val}`)
-                      .join(' • ');
-
-                    return (
-                      <button
-                        key={v._id || idx}
-                        type="button"
-                        onClick={() => handleToggleVariant(v)}
-                        className={`px-3.5 py-2 rounded-xl border text-xs font-medium transition-all cursor-pointer flex items-center gap-2 ${
-                          isSelected
-                            ? 'bg-[#1b1914] border-[#C6A87C] text-white shadow-[0_0_15px_rgba(198,168,124,0.2)] ring-1 ring-[#C6A87C]'
-                            : 'bg-[#111115] border-[#22222a] text-gray-300 hover:border-[#C6A87C]/50 hover:text-white'
-                        }`}
-                      >
-                        <span className={isSelected ? 'text-[#C6A87C] font-semibold' : ''}>
-                          {attrSummary || `Variant #${idx + 1}`}
-                        </span>
-
-                        <span className="text-[10px] font-mono text-[#8a8894] pl-1 border-l border-[#262630]">
-                          {formatCurrency(
-                            v.price?.amount || currentProduct.price.amount,
-                            v.price?.currency || currentProduct.price.currency
-                          )}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                )}
               </div>
-            )}
+            </div>
 
-            {/* 4. Quantity & Action Buttons */}
-            <div className="space-y-3 pt-2 border-t border-[#1b1b22]">
+            {/* 2. DYNAMIC VARIANT / EDITION SELECTOR */}
+            {/* Single click selects that variant, auto-updating price, image, stock, and its own attributes! */}
+            <div className="space-y-2 pt-1 border-t border-[#1f1c17]">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-[#8a8894]">
+                <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[#8a8278]">
+                  Select Edition / Variant
+                </span>
+                <span className="text-[10px] font-bold text-[#C6A87C] uppercase tracking-wider">
+                  {selectedVariant ? 'Custom Edition' : 'Original Piece'}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-2 sm:gap-2.5">
+                {variantOptions.map((opt) => {
+                  const isActive = opt.isBase
+                    ? selectedVariant === null
+                    : selectedVariant?._id === opt.variant?._id;
+
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        if (opt.isBase) {
+                          setSelectedVariant(null);
+                        } else {
+                          setSelectedVariant(opt.variant);
+                        }
+                      }}
+                      className={`group relative px-3.5 py-1.5 rounded-xl border text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-2 select-none ${
+                        isActive
+                          ? 'bg-gradient-to-b from-[#2c241a] to-[#15120e] border-[#C6A87C] text-[#fff8e7] shadow-[0_0_16px_rgba(198,168,124,0.3)] ring-1 ring-[#C6A87C]/80 scale-[1.02]'
+                          : 'bg-[#12100d] border-[#262019] text-[#a59c90] hover:border-[#C6A87C]/60 hover:text-white hover:bg-[#1c1813] hover:scale-[1.02] active:scale-95 shadow-sm'
+                      }`}
+                    >
+                      {/* Luminous Active Jewel Indicator */}
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                          isActive
+                            ? 'bg-[#C6A87C] shadow-[0_0_8px_#C6A87C] scale-110'
+                            : 'bg-[#3d362d] group-hover:bg-[#C6A87C]/60'
+                        }`}
+                      />
+                      <span>{opt.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 3. LUXURY SPECIFICATIONS & ATTRIBUTES SHOWCASE (With Breathing Room & Only Active Piece's Attributes) */}
+            <div className="bg-gradient-to-b from-[#13110d] to-[#0c0b09] border border-[#231f18] rounded-xl p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1 h-3 rounded-full bg-[#C6A87C]" />
+                  <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#C6A87C]">
+                    Piece Specifications
+                  </span>
+                </div>
+                <span className="text-[9px] text-[#7d756b] uppercase tracking-wider font-mono">
+                  {selectedVariant ? 'Bespoke Customization' : 'Master Atelier Piece'}
+                </span>
+              </div>
+
+              {/* Attribute Grid with Breathing Room - Only active attributes are displayed! */}
+              <div
+                className={`grid gap-2 ${
+                  Object.keys(currentActiveAttributes).length === 1
+                    ? 'grid-cols-1 sm:grid-cols-2'
+                    : Object.keys(currentActiveAttributes).length === 2
+                    ? 'grid-cols-2'
+                    : 'grid-cols-2 sm:grid-cols-3'
+                }`}
+              >
+                {Object.entries(currentActiveAttributes).map(([k, val]) => (
+                  <div
+                    key={k}
+                    className="flex flex-col justify-center bg-[#181510]/90 border border-[#2c261e] rounded-lg px-3 py-2 transition-all hover:border-[#C6A87C]/40"
+                  >
+                    <span className="text-[9px] uppercase tracking-[0.2em] font-semibold text-[#8a8278]">
+                      {k}
+                    </span>
+                    <span className="text-xs font-semibold text-white tracking-wide mt-0.5 capitalize truncate">
+                      {val}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 4. Stock Status Indicator */}
+            <div className="flex items-center justify-between">
+              {activeStock > 0 ? (
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  {activeStock} IN STOCK
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-rose-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                  OUT OF STOCK / BESPOKE CREATION
+                </span>
+              )}
+            </div>
+
+            {/* 5. THE DETAILS Narrative (Scrollable with hidden scrollbar so all text can be viewed) */}
+            <div className="space-y-1 pt-1 border-t border-[#1f1c17]">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[#8a8278]">
+                  THE DETAILS
+                </span>
+                <span className="text-[9px] text-[#6b645b] tracking-wider uppercase">
+                  Artisan Provenance
+                </span>
+              </div>
+              <div className="max-h-20 sm:max-h-22 overflow-y-auto no-scrollbar bg-[#0d0c0a] p-2.5 rounded-xl border border-[#1d1a15]">
+                <p className="text-xs text-[#b5aca0] leading-relaxed select-text">
+                  {currentProduct.description}
+                </p>
+              </div>
+            </div>
+
+            {/* 6. Quantity Stepper & Primary CTAs */}
+            <div className="space-y-2 pt-1 border-t border-[#1f1c17]">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#8a8278]">
                   Quantity
                 </span>
-                <div className="flex items-center border border-[#22222a] rounded-xl bg-[#111115] overflow-hidden">
+                <div className="flex items-center border border-[#25211b] rounded-xl bg-[#100f0d] overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                     disabled={quantity <= 1}
-                    className="w-8 h-8 flex items-center justify-center text-[#C6A87C] hover:bg-[#1a191f] disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
+                    className="w-7 h-7 flex items-center justify-center text-[#C6A87C] hover:bg-[#1a1712] disabled:opacity-30 transition-colors cursor-pointer"
                   >
                     <i className="ri-subtract-line text-xs" />
                   </button>
-                  <span className="w-9 text-center text-xs font-mono font-bold text-white">
+                  <span className="w-7 text-center text-xs font-mono font-bold text-white">
                     {quantity}
                   </span>
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => Math.min(activeStock || 10, q + 1))}
                     disabled={activeStock > 0 ? quantity >= activeStock : quantity >= 10}
-                    className="w-8 h-8 flex items-center justify-center text-[#C6A87C] hover:bg-[#1a191f] disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
+                    className="w-7 h-7 flex items-center justify-center text-[#C6A87C] hover:bg-[#1a1712] disabled:opacity-30 transition-colors cursor-pointer"
                   >
                     <i className="ri-add-line text-xs" />
                   </button>
                 </div>
               </div>
 
-              {/* Call-to-Action Buttons */}
-              <div className="grid grid-cols-2 gap-3 pt-1">
+              {/* Action Buttons: Solid Luxury Gold & Matte Outlined */}
+              <div className="grid grid-cols-2 gap-2.5 pt-0.5">
                 <button
                   type="button"
-                  onClick={handleAddToBag}
-                  className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#08080a] font-bold text-xs uppercase tracking-wider shadow-[0_4px_20px_rgba(198,168,124,0.25)] hover:shadow-[0_6px_25px_rgba(198,168,124,0.4)] hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  onClick={handleAddToCart}
+                  className="w-full py-2.5 sm:py-3 px-3 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-xs uppercase tracking-wider shadow-[0_4px_20px_rgba(198,168,124,0.25)] hover:shadow-[0_6px_25px_rgba(198,168,124,0.4)] hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <i className="ri-shopping-bag-3-line text-sm" />
-                  Add to Bag
+                  ADD TO CART
                 </button>
 
                 <button
                   type="button"
                   onClick={handleBuyNow}
-                  className="w-full py-3.5 px-4 rounded-xl border border-[#C6A87C]/60 hover:bg-[#C6A87C]/15 text-[#C6A87C] font-bold text-xs uppercase tracking-wider active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                  className="w-full py-2.5 sm:py-3 px-3 rounded-xl border border-[#C6A87C]/60 hover:bg-[#C6A87C]/15 text-[#C6A87C] font-bold text-xs uppercase tracking-wider active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
                 >
                   <i className="ri-flashlight-line text-sm text-[#C6A87C]" />
-                  Buy Now
+                  BUY NOW
                 </button>
               </div>
             </div>
 
-            {/* 5. Garment Narrative & Details */}
-            <div className="pt-2 border-t border-[#1b1b22] space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#C6A87C] block">
-                Garment Narrative & Craftsmanship
-              </span>
-              <p className="text-xs text-[#a5a1b0] leading-relaxed line-clamp-3 bg-[#0e0e12] p-3 rounded-xl border border-[#1b1b22]">
-                {currentProduct.description}
-              </p>
-            </div>
-
-            {/* 6. Heritage Guarantees */}
-            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#1b1b22] text-[10px] text-[#7a7888]">
-              <div className="flex items-center gap-1.5">
-                <i className="ri-shield-check-line text-[#C6A87C]" />
-                <span>100% Authentic Handloom</span>
+            {/* 7. Specification & Heritage Rows */}
+            <div className="pt-1.5 border-t border-[#1f1c17] space-y-1 text-[10px] uppercase tracking-wider">
+              <div className="flex items-center justify-between text-[#7a7267]">
+                <span>SHIPPING</span>
+                <span className="text-gray-300 font-medium">COMPLIMENTARY OVER INR 15,000</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <i className="ri-plane-line text-[#C6A87C]" />
-                <span>Global Insured Courier</span>
+              <div className="flex items-center justify-between text-[#7a7267]">
+                <span>RETURNS</span>
+                <span className="text-gray-300 font-medium">WITHIN 14 DAYS OF DELIVERY</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <i className="ri-medal-line text-[#C6A87C]" />
-                <span>Atelier Verified Piece</span>
+              <div className="flex items-center justify-between text-[#7a7267]">
+                <span>AUTHENTICITY</span>
+                <span className="text-gray-300 font-medium">100% GUARANTEED HANDLOOM</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ══════════════════════════════════════════════════════════════
+      {/* ══════════════════════════════════════════════════════════════════
           SLIDE-OUT SELLER ATELIER DRAWER (STOCK & VARIANT CONTROLS)
-      ══════════════════════════════════════════════════════════════ */}
+      ══════════════════════════════════════════════════════════════════ */}
       {isSellerDrawerOpen && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-lg bg-[#0e0e12] border-l border-[#202028] h-full p-6 flex flex-col justify-between shadow-2xl overflow-y-auto">
+          <div className="w-full max-w-lg bg-[#100f0d] border-l border-[#221e19] h-full p-6 flex flex-col justify-between shadow-2xl overflow-y-auto">
             <div className="space-y-5">
               {/* Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-[#1b1b22]">
+              <div className="flex items-center justify-between pb-3 border-b border-[#1b1814]">
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-[#C6A87C]">
                     Seller Atelier Studio
@@ -762,7 +790,7 @@ const ProductDetail = () => {
                 <button
                   type="button"
                   onClick={() => setIsSellerDrawerOpen(false)}
-                  className="w-8 h-8 rounded-full bg-[#16161c] border border-[#252530] text-gray-400 hover:text-white flex items-center justify-center cursor-pointer"
+                  className="w-8 h-8 rounded-full bg-[#181511] border border-[#2a2520] text-gray-400 hover:text-white flex items-center justify-center cursor-pointer"
                 >
                   <i className="ri-close-line text-sm" />
                 </button>
@@ -772,14 +800,14 @@ const ProductDetail = () => {
               <button
                 type="button"
                 onClick={() => setIsAddVariantModalOpen(true)}
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#08080a] font-bold text-xs uppercase tracking-wider shadow-lg hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-xs uppercase tracking-wider shadow-lg hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <i className="ri-add-circle-line text-base" />
                 Craft New Product Variant
               </button>
 
               {/* Base Product Stock Card */}
-              <div className="p-4 rounded-xl bg-[#131318] border border-[#202028] space-y-2.5">
+              <div className="p-4 rounded-xl bg-[#14120e] border border-[#221e19] space-y-2.5">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-white">
                     Base Piece Stock
@@ -794,13 +822,13 @@ const ProductDetail = () => {
                     min="0"
                     value={baseStockInput}
                     onChange={(e) => setBaseStockInput(e.target.value)}
-                    className="flex-1 bg-[#08080a] border border-[#252530] rounded-xl px-3 py-2 text-xs text-white font-mono outline-none focus:border-[#C6A87C]"
+                    className="flex-1 bg-[#080806] border border-[#2a2520] rounded-xl px-3 py-2 text-xs text-white font-mono outline-none focus:border-[#C6A87C]"
                   />
                   <button
                     type="button"
                     onClick={handleSaveBaseStock}
                     disabled={isUpdatingStock}
-                    className="px-4 py-2 rounded-xl bg-[#1a191f] border border-[#C6A87C]/50 text-[#C6A87C] hover:bg-[#C6A87C] hover:text-[#08080a] transition-all text-xs font-bold uppercase cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-[#1c1914] border border-[#C6A87C]/50 text-[#C6A87C] hover:bg-[#C6A87C] hover:text-[#080806] transition-all text-xs font-bold uppercase cursor-pointer"
                   >
                     Save Stock
                   </button>
@@ -813,7 +841,7 @@ const ProductDetail = () => {
                   <h4 className="text-xs font-bold uppercase tracking-wider text-[#C6A87C]">
                     Crafted Variants ({availableVariants.length})
                   </h4>
-                  <span className="text-[10px] text-[#7a7888]">
+                  <span className="text-[10px] text-[#7a7267]">
                     Shows variant specific visuals & valuation
                   </span>
                 </div>
@@ -831,10 +859,10 @@ const ProductDetail = () => {
                       return (
                         <div
                           key={v._id || idx}
-                          className="p-3 rounded-xl bg-[#131318] border border-[#202028] flex items-center justify-between gap-3"
+                          className="p-3 rounded-xl bg-[#14120e] border border-[#221e19] flex items-center justify-between gap-3"
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-10 h-12 rounded-lg bg-[#08080a] border border-[#252530] overflow-hidden shrink-0">
+                            <div className="w-10 h-12 rounded-lg bg-[#080806] border border-[#2a2520] overflow-hidden shrink-0">
                               <img
                                 src={vThumb}
                                 alt=""
@@ -849,7 +877,7 @@ const ProductDetail = () => {
                                 {Object.entries(attrs).map(([k, val]) => (
                                   <span
                                     key={k}
-                                    className="text-[10px] bg-[#1a1920] border border-[#30303c] px-1.5 py-0.5 rounded text-gray-200"
+                                    className="text-[10px] bg-[#1a1712] border border-[#3a342c] px-1.5 py-0.5 rounded text-gray-200"
                                   >
                                     <strong className="text-[#C6A87C]">{k}:</strong> {val}
                                   </span>
@@ -875,12 +903,12 @@ const ProductDetail = () => {
                                   [v._id]: e.target.value,
                                 }))
                               }
-                              className="w-16 bg-[#08080a] border border-[#252530] rounded-lg px-2 py-1 text-xs text-white font-mono outline-none focus:border-[#C6A87C]"
+                              className="w-16 bg-[#080806] border border-[#2a2520] rounded-lg px-2 py-1 text-xs text-white font-mono outline-none focus:border-[#C6A87C]"
                             />
                             <button
                               type="button"
                               onClick={() => handleSaveVariantStock(v._id)}
-                              className="px-2.5 py-1 rounded-lg bg-[#1a191f] border border-[#C6A87C]/40 text-[#C6A87C] hover:bg-[#C6A87C] hover:text-[#08080a] transition-all text-[10px] font-bold uppercase cursor-pointer"
+                              className="px-2.5 py-1 rounded-lg bg-[#1c1914] border border-[#C6A87C]/40 text-[#C6A87C] hover:bg-[#C6A87C] hover:text-[#080806] transition-all text-[10px] font-bold uppercase cursor-pointer"
                             >
                               Update
                             </button>
@@ -890,18 +918,18 @@ const ProductDetail = () => {
                     })}
                   </div>
                 ) : (
-                  <p className="text-xs text-[#8a8894] italic p-3 bg-[#131318] rounded-xl border border-[#202028]">
-                    No custom variants added yet.
+                  <p className="text-xs text-[#8a8278] italic p-3 bg-[#14120e] rounded-xl border border-[#201c18]">
+                    No custom variants crafted yet.
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="pt-3 border-t border-[#1b1b22]">
+            <div className="pt-3 border-t border-[#1b1814]">
               <button
                 type="button"
                 onClick={() => setIsSellerDrawerOpen(false)}
-                className="w-full py-2 rounded-xl border border-[#252530] text-gray-300 hover:text-white text-xs font-semibold uppercase cursor-pointer"
+                className="w-full py-2 rounded-xl border border-[#2a2520] text-gray-300 hover:text-white text-xs font-semibold uppercase cursor-pointer"
               >
                 Close Studio
               </button>
@@ -910,13 +938,13 @@ const ProductDetail = () => {
         </div>
       )}
 
-      {/* ══════════════════════════════════════════════════════════════
-          SELLER "ADD NEW VARIANT" MODAL (Dynamic attributes, up to 7 images)
-      ══════════════════════════════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════════════════════
+          SELLER "ADD NEW VARIANT" MODAL (Dynamic attributes & photos)
+      ══════════════════════════════════════════════════════════════════ */}
       {isAddVariantModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#101014] border border-[#252530] w-full max-w-lg rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4 scrollbar-thin scrollbar-thumb-[#252530]">
-            <div className="flex items-center justify-between pb-3 border-b border-[#1b1b22]">
+          <div className="bg-[#100f0d] border border-[#25211b] w-full max-w-lg rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4 scrollbar-thin scrollbar-thumb-[#25211b]">
+            <div className="flex items-center justify-between pb-3 border-b border-[#1b1814]">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-[#C6A87C]">
                   Atelier Crafting
@@ -926,7 +954,7 @@ const ProductDetail = () => {
               <button
                 type="button"
                 onClick={() => setIsAddVariantModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-[#181820] border border-[#282834] text-gray-400 hover:text-white flex items-center justify-center cursor-pointer"
+                className="w-7 h-7 rounded-full bg-[#181511] border border-[#2a2520] text-gray-400 hover:text-white flex items-center justify-center cursor-pointer"
               >
                 <i className="ri-close-line text-sm" />
               </button>
@@ -946,22 +974,6 @@ const ProductDetail = () => {
                   Dynamic Attributes <span className="text-red-400">* (At least 1 required)</span>
                 </label>
 
-                {/* Quick Add Chips */}
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[10px] text-[#7a7888]">Quick Tags:</span>
-                  {COMMON_ATTRIBUTE_TAGS.map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => setVariantAttrKey(tag)}
-                      className="px-2 py-0.5 rounded-full bg-[#181820] border border-[#282834] hover:border-[#C6A87C] text-[10px] text-gray-300 transition-colors cursor-pointer"
-                    >
-                      +{tag}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Key & Value Inputs */}
                 <div className="grid grid-cols-12 gap-2">
                   <div className="col-span-5">
                     <input
@@ -969,71 +981,63 @@ const ProductDetail = () => {
                       placeholder="Name (e.g. Color)"
                       value={variantAttrKey}
                       onChange={(e) => setVariantAttrKey(e.target.value)}
-                      className="w-full bg-[#08080a] border border-[#252530] rounded-xl px-3 py-2 text-xs text-white focus:border-[#C6A87C] outline-none"
+                      className="w-full bg-[#080806] border border-[#2a2520] rounded-xl px-3 py-2 text-xs text-white focus:border-[#C6A87C] outline-none"
                     />
                   </div>
                   <div className="col-span-5">
                     <input
                       type="text"
-                      placeholder="Value (e.g. Royal Emerald)"
+                      placeholder="Value (e.g. Blue)"
                       value={variantAttrVal}
                       onChange={(e) => setVariantAttrVal(e.target.value)}
-                      className="w-full bg-[#08080a] border border-[#252530] rounded-xl px-3 py-2 text-xs text-white focus:border-[#C6A87C] outline-none"
+                      className="w-full bg-[#080806] border border-[#2a2520] rounded-xl px-3 py-2 text-xs text-white focus:border-[#C6A87C] outline-none"
                     />
                   </div>
                   <div className="col-span-2">
                     <button
                       type="button"
-                      onClick={handleAddAttribute}
+                      onClick={handleAddAttributeToDraft}
                       disabled={!variantAttrKey.trim() || !variantAttrVal.trim()}
-                      className="w-full h-full py-2 rounded-xl bg-[#1a191f] border border-[#C6A87C]/40 text-[#C6A87C] hover:bg-[#C6A87C] hover:text-[#08080a] text-xs font-bold uppercase transition-all disabled:opacity-40 cursor-pointer"
+                      className="w-full h-full py-2 rounded-xl bg-[#1c1914] border border-[#C6A87C]/40 text-[#C6A87C] hover:bg-[#C6A87C] hover:text-[#080806] text-xs font-bold uppercase transition-all disabled:opacity-40 cursor-pointer"
                     >
                       Add
                     </button>
                   </div>
                 </div>
 
-                {/* Display added attributes */}
+                {/* Added attributes */}
                 <div className="flex flex-wrap gap-1.5 pt-1 min-h-[28px]">
                   {Object.entries(variantAttributes).map(([k, v]) => (
                     <span
                       key={k}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#181820] border border-[#C6A87C]/60 text-xs text-white"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#181511] border border-[#C6A87C]/60 text-xs text-white"
                     >
                       <span className="text-[#C6A87C] font-semibold">{k}:</span> {v}
                       <button
                         type="button"
-                        onClick={() => handleRemoveAttribute(k)}
+                        onClick={() => handleRemoveAttributeFromDraft(k)}
                         className="text-gray-400 hover:text-red-400 ml-1 cursor-pointer"
                       >
                         <i className="ri-close-line text-xs" />
                       </button>
                     </span>
                   ))}
-                  {Object.keys(variantAttributes).length === 0 && (
-                    <span className="text-[11px] text-[#6d6a78] italic">
-                      Define at least one attribute (e.g. Color: Royal Emerald, Size: XL)
-                    </span>
-                  )}
                 </div>
               </div>
 
-              {/* Optional Price & Stock */}
+              {/* Price & Stock */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-[#C6A87C] block">
-                    Price <span className="text-[#7a7888] font-normal lowercase">(optional)</span>
+                    Price <span className="text-[#7a7267] font-normal lowercase">(optional)</span>
                   </label>
                   <input
                     type="number"
                     placeholder={`Inherit: ${currentProduct.price.amount}`}
                     value={variantPrice}
                     onChange={(e) => setVariantPrice(e.target.value)}
-                    className="w-full bg-[#08080a] border border-[#252530] rounded-xl px-3 py-2 text-xs text-white font-mono focus:border-[#C6A87C] outline-none"
+                    className="w-full bg-[#080806] border border-[#2a2520] rounded-xl px-3 py-2 text-xs text-white font-mono focus:border-[#C6A87C] outline-none"
                   />
-                  <span className="text-[9px] text-[#6d6a78] block">
-                    Inherits parent valuation if left blank
-                  </span>
                 </div>
 
                 <div className="space-y-1">
@@ -1046,31 +1050,27 @@ const ProductDetail = () => {
                     placeholder="0"
                     value={variantStock}
                     onChange={(e) => setVariantStock(e.target.value)}
-                    className="w-full bg-[#08080a] border border-[#252530] rounded-xl px-3 py-2 text-xs text-white font-mono focus:border-[#C6A87C] outline-none"
+                    className="w-full bg-[#080806] border border-[#2a2520] rounded-xl px-3 py-2 text-xs text-white font-mono focus:border-[#C6A87C] outline-none"
                   />
-                  <span className="text-[9px] text-[#6d6a78] block">Initial units</span>
                 </div>
               </div>
 
-              {/* Upload Visuals (up to 7 images) */}
+              {/* Visuals Upload */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-[#C6A87C]">
-                    Visuals <span className="text-[#7a7888] font-normal lowercase">(optional, up to 7)</span>
+                    Visuals <span className="text-[#7a7267] font-normal lowercase">(optional, up to 7)</span>
                   </label>
-                  <span className="text-[10px] font-mono text-[#7a7888]">
+                  <span className="text-[10px] font-mono text-[#7a7267]">
                     {variantFiles.length}/7 photos
                   </span>
                 </div>
 
                 {variantFiles.length < 7 && (
-                  <label className="flex flex-col items-center justify-center p-3.5 rounded-xl border border-dashed border-[#252530] hover:border-[#C6A87C]/60 bg-[#08080a] cursor-pointer transition-colors text-center">
+                  <label className="flex flex-col items-center justify-center p-3.5 rounded-xl border border-dashed border-[#2a2520] hover:border-[#C6A87C]/60 bg-[#080806] cursor-pointer transition-colors text-center">
                     <i className="ri-upload-cloud-line text-lg text-[#C6A87C]" />
                     <span className="text-xs text-gray-300 mt-0.5">
                       Upload variant-specific photos
-                    </span>
-                    <span className="text-[9px] text-[#7a7888]">
-                      Inherits parent image if none selected
                     </span>
                     <input
                       type="file"
@@ -1088,7 +1088,7 @@ const ProductDetail = () => {
                     {variantPreviews.map((previewUrl, idx) => (
                       <div
                         key={idx}
-                        className="relative w-12 h-14 rounded-lg overflow-hidden border border-[#252530] bg-[#08080a] group"
+                        className="relative w-12 h-14 rounded-lg overflow-hidden border border-[#2a2520] bg-[#080806] group"
                       >
                         <img
                           src={previewUrl}
@@ -1108,31 +1108,21 @@ const ProductDetail = () => {
                 )}
               </div>
 
-              {/* Submit / Cancel buttons */}
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#1b1b22]">
+              {/* Submit Buttons */}
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#1b1814]">
                 <button
                   type="button"
                   onClick={() => setIsAddVariantModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-[#252530] text-gray-300 text-xs font-semibold uppercase cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-[#2a2520] text-gray-300 text-xs font-semibold uppercase cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingVariant || Object.keys(variantAttributes).length === 0}
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#08080a] font-bold text-xs uppercase tracking-wider shadow-md disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-xs uppercase tracking-wider shadow-md disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                 >
-                  {isSubmittingVariant ? (
-                    <>
-                      <i className="ri-loader-4-line animate-spin text-sm" />
-                      Crafting...
-                    </>
-                  ) : (
-                    <>
-                      <i className="ri-check-line text-sm" />
-                      Add Variant
-                    </>
-                  )}
+                  {isSubmittingVariant ? 'Crafting...' : 'Add Variant'}
                 </button>
               </div>
             </form>
@@ -1143,26 +1133,26 @@ const ProductDetail = () => {
       {/* ── Guest Authentication Prompt Modal ── */}
       {authPromptProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#101014] border border-[#252530] max-w-sm w-full rounded-2xl p-6 text-center shadow-2xl space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#181820] border border-[#C6A87C]/40 flex items-center justify-center text-[#C6A87C] mx-auto">
+          <div className="bg-[#100f0d] border border-[#25211b] max-w-sm w-full rounded-2xl p-6 text-center shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-[#181511] border border-[#C6A87C]/40 flex items-center justify-center text-[#C6A87C] mx-auto">
               <i className="ri-vip-crown-2-line text-2xl" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-white">Sign In to Acquire</h3>
-              <p className="text-xs text-[#8a8894] mt-1">
+              <h3 className="text-lg font-bold text-white">Sign In to Continue</h3>
+              <p className="text-xs text-[#8a8278] mt-1">
                 Please sign in to your patron account to reserve this couture piece.
               </p>
             </div>
             <div className="space-y-2">
               <Link
                 to="/login"
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#08080a] font-bold text-xs uppercase tracking-wider block"
+                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-xs uppercase tracking-wider block"
               >
                 Sign In
               </Link>
               <Link
                 to="/register"
-                className="w-full py-2.5 rounded-xl bg-[#141418] border border-[#252530] text-gray-300 text-xs font-semibold uppercase tracking-wider block"
+                className="w-full py-2.5 rounded-xl bg-[#14120e] border border-[#2a2520] text-gray-300 text-xs font-semibold uppercase tracking-wider block"
               >
                 Create Account
               </Link>
@@ -1170,7 +1160,7 @@ const ProductDetail = () => {
             <button
               type="button"
               onClick={() => setAuthPromptProduct(null)}
-              className="text-xs text-[#6d6a78] hover:text-gray-400 cursor-pointer block mx-auto"
+              className="text-xs text-[#665f55] hover:text-gray-400 cursor-pointer block mx-auto"
             >
               Cancel
             </button>
@@ -1181,13 +1171,13 @@ const ProductDetail = () => {
       {/* ── Order Reserved Modal ── */}
       {purchaseSuccessProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#101014] border border-[#252530] max-w-sm w-full rounded-2xl p-6 text-center shadow-2xl space-y-4">
+          <div className="bg-[#100f0d] border border-[#25211b] max-w-sm w-full rounded-2xl p-6 text-center shadow-2xl space-y-4">
             <div className="w-12 h-12 rounded-2xl bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-center text-emerald-400 mx-auto">
               <i className="ri-checkbox-circle-line text-2xl" />
             </div>
             <div>
               <h3 className="text-lg font-bold text-white">Acquisition Reserved</h3>
-              <p className="text-xs text-[#8a8894] mt-1">
+              <p className="text-xs text-[#8a8278] mt-1">
                 "{purchaseSuccessProduct.title}" (Qty: {quantity}) has been reserved for{' '}
                 {formatCurrency(activePrice * quantity, activeCurrency)}.
               </p>
@@ -1195,7 +1185,7 @@ const ProductDetail = () => {
             <button
               type="button"
               onClick={() => setPurchaseSuccessProduct(null)}
-              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#08080a] font-bold text-xs uppercase tracking-wider cursor-pointer"
+              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-xs uppercase tracking-wider cursor-pointer"
             >
               Continue Exploring
             </button>

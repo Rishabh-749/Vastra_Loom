@@ -12,6 +12,7 @@ const Navbar = ({
   subtitle,
   onClear,
   showNavLinks = true,
+  theme = 'dark',
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -19,6 +20,7 @@ const Navbar = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isSellerMode = variant === 'seller' || location.pathname.startsWith('/seller');
+  const isLight = theme === 'light';
 
   const navLinks = [
     { label: 'Collections', href: '/#catalog' },
@@ -32,44 +34,76 @@ const Navbar = ({
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full h-16 bg-[#080806]/90 backdrop-blur-xl border-b border-[#2a2520] transition-colors">
+    <header
+      className={`sticky top-0 z-50 w-full h-16 backdrop-blur-xl border-b transition-colors ${
+        isLight
+          ? 'bg-[#fafaf9]/90 border-[#e7e5e4] text-zinc-900'
+          : 'bg-[#080806]/90 border-[#2a2520] text-gray-100'
+      }`}
+    >
       <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
         
         {/* ── Brand Logo & Context ── */}
         <div className="flex items-center gap-3 sm:gap-4 shrink-0">
           <Link
             to={isSellerMode ? "/seller/dashboard" : "/"}
-            className="flex items-center gap-3 text-[#C6A87C] hover:opacity-95 transition-opacity group"
+            className="flex items-center gap-3 hover:opacity-90 transition-opacity group"
           >
-            <div className="w-9 h-9 rounded-xl bg-[#12100d] border border-[#2a2520] group-hover:border-[#C6A87C]/50 flex items-center justify-center transition-colors shadow-inner shrink-0">
-              <i className="ri-vip-crown-2-line text-lg text-[#C6A87C]" />
+            <div
+              className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-colors shrink-0 ${
+                isLight
+                  ? 'bg-[#f5f5f4] border-[#e7e5e4] text-[#926c38]'
+                  : 'bg-[#12100d] border-[#2a2520] text-[#C6A87C]'
+              }`}
+            >
+              <i className="ri-vip-crown-2-line text-lg" />
             </div>
-            <span className="text-sm sm:text-base font-bold tracking-[0.22em] uppercase text-white font-sans flex items-center">
+            <span
+              className={`text-sm sm:text-base font-bold tracking-[0.22em] uppercase font-sans flex items-center ${
+                isLight ? 'text-zinc-900' : 'text-white'
+              }`}
+            >
               VASTRA <span className="text-[#C6A87C] ml-1.5">LOOM</span>
             </span>
           </Link>
 
-          {/* Subtitle / Breadcrumb (e.g. / Atelier Dashboard) */}
+          {/* Subtitle / Breadcrumb */}
           {subtitle && (
-            <div className="flex items-center gap-2 pl-3 sm:pl-4 border-l border-[#2a2520] h-5">
-              <span className="text-xs text-[#a0988e] font-medium tracking-wide">
+            <div
+              className={`flex items-center gap-2 pl-3 sm:pl-4 border-l h-5 ${
+                isLight ? 'border-[#e7e5e4]' : 'border-[#2a2520]'
+              }`}
+            >
+              <span
+                className={`text-xs font-medium tracking-wide ${
+                  isLight ? 'text-zinc-500' : 'text-[#a0988e]'
+                }`}
+              >
                 {subtitle}
               </span>
             </div>
           )}
         </div>
 
-        {/* ── Center: Customer Navigation Links (Storefront Mode) ── */}
+        {/* ── Center: Customer Navigation Links ── */}
         {!isSellerMode && showNavLinks && (
           <nav className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
               <a
                 key={link.label}
                 href={link.href}
-                className="text-xs font-semibold tracking-[0.14em] uppercase text-gray-300 hover:text-[#C6A87C] transition-colors relative py-1 group"
+                className={`text-xs font-semibold tracking-[0.14em] uppercase transition-colors relative py-1 group ${
+                  isLight
+                    ? 'text-zinc-600 hover:text-zinc-950'
+                    : 'text-gray-300 hover:text-[#C6A87C]'
+                }`}
               >
                 {link.label}
-                <span className="absolute bottom-0 left-0 w-0 h-[1.5px] bg-[#C6A87C] transition-all duration-300 group-hover:w-full" />
+                <span
+                  className={`absolute bottom-0 left-0 w-0 h-[1.5px] transition-all duration-300 group-hover:w-full ${
+                    isLight ? 'bg-zinc-900' : 'bg-[#C6A87C]'
+                  }`}
+                />
               </a>
             ))}
           </nav>
@@ -80,13 +114,16 @@ const Navbar = ({
           {/* Seller Mode Specific Actions */}
           {isSellerMode ? (
             <div className="flex items-center gap-2 sm:gap-3">
-              {/* Quick Seller Navigation Tabs */}
               <div className="hidden md:flex items-center gap-1.5 mr-2">
                 <Link
                   to="/seller/dashboard"
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wider uppercase transition-colors ${
                     location.pathname === '/seller/dashboard' || location.pathname === '/seller'
-                      ? 'bg-[#181511] text-[#C6A87C] border border-[#C6A87C]/40'
+                      ? isLight
+                        ? 'bg-zinc-900 text-white'
+                        : 'bg-[#181511] text-[#C6A87C] border border-[#C6A87C]/40'
+                      : isLight
+                      ? 'text-zinc-600 hover:text-zinc-900'
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
@@ -96,7 +133,11 @@ const Navbar = ({
                   to="/seller/create-product"
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wider uppercase transition-colors ${
                     location.pathname === '/seller/create-product'
-                      ? 'bg-[#181511] text-[#C6A87C] border border-[#C6A87C]/40'
+                      ? isLight
+                        ? 'bg-zinc-900 text-white'
+                        : 'bg-[#181511] text-[#C6A87C] border border-[#C6A87C]/40'
+                      : isLight
+                      ? 'text-zinc-600 hover:text-zinc-900'
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
@@ -108,19 +149,26 @@ const Navbar = ({
                 <button
                   type="button"
                   onClick={onClear}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white hover:bg-[#161411] transition-colors cursor-pointer"
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                    isLight
+                      ? 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
+                      : 'text-gray-400 hover:text-white hover:bg-[#161411]'
+                  }`}
                 >
                   Clear
                 </button>
               )}
 
-              {/* Seller Sign Out */}
               {user && (
                 <button
                   type="button"
                   onClick={onSignOut}
                   title="Sign Out of Atelier"
-                  className="px-3 py-1.5 rounded-lg border border-[#2a2520] hover:border-red-900/60 bg-[#0d0c0b] text-gray-400 hover:text-red-400 flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer"
+                  className={`px-3 py-1.5 rounded-lg border flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer ${
+                    isLight
+                      ? 'border-zinc-300 hover:border-red-500 bg-white text-zinc-700 hover:text-red-600'
+                      : 'border-[#2a2520] hover:border-red-900/60 bg-[#0d0c0b] text-gray-400 hover:text-red-400'
+                  }`}
                 >
                   <i className="ri-logout-box-r-line" />
                   <span className="hidden sm:inline">Sign Out</span>
@@ -134,7 +182,11 @@ const Navbar = ({
               <button
                 type="button"
                 title="Wishlist"
-                className="hidden sm:flex w-8 h-8 rounded-lg border border-[#2a2520] hover:border-[#C6A87C]/50 bg-[#0d0c0b] text-gray-300 hover:text-[#C6A87C] items-center justify-center transition-colors cursor-pointer"
+                className={`hidden sm:flex w-8 h-8 rounded-lg border items-center justify-center transition-colors cursor-pointer ${
+                  isLight
+                    ? 'border-zinc-300 bg-white text-zinc-600 hover:text-zinc-950'
+                    : 'border-[#2a2520] hover:border-[#C6A87C]/50 bg-[#0d0c0b] text-gray-300 hover:text-[#C6A87C]'
+                }`}
               >
                 <i className="ri-heart-line text-sm" />
               </button>
@@ -143,20 +195,32 @@ const Navbar = ({
               <button
                 type="button"
                 title="Shopping Bag"
-                className="relative w-8 h-8 rounded-lg border border-[#2a2520] hover:border-[#C6A87C]/50 bg-[#0d0c0b] text-gray-300 hover:text-[#C6A87C] flex items-center justify-center transition-colors cursor-pointer"
+                className={`relative w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
+                  isLight
+                    ? 'border-zinc-300 bg-white text-zinc-700 hover:text-zinc-950'
+                    : 'border-[#2a2520] hover:border-[#C6A87C]/50 bg-[#0d0c0b] text-gray-300 hover:text-[#C6A87C]'
+                }`}
               >
                 <i className="ri-shopping-bag-3-line text-sm" />
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#C6A87C] text-[#080806] font-bold text-[9px] flex items-center justify-center shadow">
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-zinc-900 text-white font-bold text-[9px] flex items-center justify-center shadow">
                   0
                 </span>
               </button>
 
               {/* User Account / Auth */}
               {user ? (
-                <div className="flex items-center gap-2 pl-2 border-l border-[#2a2520]">
+                <div
+                  className={`flex items-center gap-2 pl-2 border-l ${
+                    isLight ? 'border-zinc-200' : 'border-[#2a2520]'
+                  }`}
+                >
                   <div
                     title={user.fullname || user.email}
-                    className="w-8 h-8 rounded-full bg-[#1c1914] border border-[#C6A87C]/40 text-[#C6A87C] flex items-center justify-center text-xs font-bold uppercase"
+                    className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold uppercase ${
+                      isLight
+                        ? 'bg-zinc-100 border-zinc-300 text-zinc-800'
+                        : 'bg-[#1c1914] border-[#C6A87C]/40 text-[#C6A87C]'
+                    }`}
                   >
                     {user.fullname ? user.fullname[0] : 'U'}
                   </div>
@@ -164,7 +228,11 @@ const Navbar = ({
                     type="button"
                     onClick={onSignOut}
                     title="Sign Out"
-                    className="w-8 h-8 rounded-lg border border-[#2a2520] hover:border-red-900/60 bg-[#0d0c0b] text-gray-400 hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer"
+                    className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
+                      isLight
+                        ? 'border-zinc-300 hover:border-red-500 bg-white text-zinc-600 hover:text-red-600'
+                        : 'border-[#2a2520] hover:border-red-900/60 bg-[#0d0c0b] text-gray-400 hover:text-red-400'
+                    }`}
                   >
                     <i className="ri-logout-box-r-line text-xs" />
                   </button>
@@ -173,13 +241,21 @@ const Navbar = ({
                 <div className="flex items-center gap-2 pl-1">
                   <Link
                     to="/login"
-                    className="px-3 py-1.5 rounded-lg border border-[#2a2520] hover:border-[#C6A87C]/40 text-xs font-semibold text-gray-300 hover:text-white bg-[#0d0c0b] transition-colors"
+                    className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors ${
+                      isLight
+                        ? 'border-zinc-300 hover:border-zinc-400 text-zinc-800 bg-white'
+                        : 'border-[#2a2520] hover:border-[#C6A87C]/40 text-gray-300 hover:text-white bg-[#0d0c0b]'
+                    }`}
                   >
                     Sign In
                   </Link>
                   <Link
                     to="/register"
-                    className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#C6A87C] to-[#e8d5aa] text-[#080806] text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-opacity"
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-opacity ${
+                      isLight
+                        ? 'bg-zinc-900 text-white'
+                        : 'bg-gradient-to-r from-[#C6A87C] to-[#e8d5aa] text-[#080806]'
+                    }`}
                   >
                     Join
                   </Link>

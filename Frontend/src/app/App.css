@@ -39,6 +39,15 @@ html {
   scrollbar-color: #2b251d #080806;
 }
 
+/* Utility to hide scrollbars while enabling scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
 /* Luxury text selection */
 ::selection {
   background-color: rgba(198, 168, 124, 0.35);
