@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router';
 import 'remixicon/fonts/remixicon.css';
 import { useAuth } from '../features/auth/hooks/useAuth';
+import { useCart } from '../features/cart/hook/useCart';
 
 /**
  * Standard, highly attractive Navbar for VASTRA LOOM.
@@ -17,7 +18,15 @@ const Navbar = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { user, handleLogout } = useAuth();
+  const { totalItems, handleGetCart } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showGuestModal, setShowGuestModal] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      handleGetCart().catch(() => {});
+    }
+  }, [user]);
 
   const isSellerMode = variant === 'seller' || location.pathname.startsWith('/seller');
   const isLight = theme === 'light';
@@ -192,20 +201,44 @@ const Navbar = ({
               </button>
 
               {/* Shopping Bag */}
-              <button
-                type="button"
-                title="Shopping Bag"
-                className={`relative w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
-                  isLight
-                    ? 'border-zinc-300 bg-white text-zinc-700 hover:text-zinc-950'
-                    : 'border-[#2a2520] hover:border-[#C6A87C]/50 bg-[#0d0c0b] text-gray-300 hover:text-[#C6A87C]'
-                }`}
-              >
-                <i className="ri-shopping-bag-3-line text-sm" />
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-zinc-900 text-white font-bold text-[9px] flex items-center justify-center shadow">
-                  0
-                </span>
-              </button>
+              {user ? (
+                <Link
+                  to="/cart"
+                  title="Shopping Bag"
+                  className={`relative w-8 h-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
+                    isLight
+                      ? 'border-zinc-300 bg-white text-zinc-700 hover:text-zinc-950'
+                      : 'border-[#2a2520] hover:border-[#C6A87C]/70 bg-[#0d0c0b] text-gray-300 hover:text-[#C6A87C]'
+                  }`}
+                >
+                  <i className="ri-shopping-bag-3-line text-sm" />
+                  {totalItems > 0 ? (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-[10px] flex items-center justify-center shadow-md animate-in zoom-in-50 duration-200">
+                      {totalItems > 99 ? '99+' : totalItems}
+                    </span>
+                  ) : (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-zinc-800 border border-zinc-700 text-gray-400 font-bold text-[9px] flex items-center justify-center">
+                      0
+                    </span>
+                  )}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowGuestModal(true)}
+                  title="Sign In to Access Shopping Bag"
+                  className={`relative w-8 h-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
+                    isLight
+                      ? 'border-zinc-300 bg-white text-zinc-700 hover:text-zinc-950'
+                      : 'border-[#2a2520] hover:border-[#C6A87C]/70 bg-[#0d0c0b] text-gray-300 hover:text-[#C6A87C]'
+                  }`}
+                >
+                  <i className="ri-shopping-bag-3-line text-sm" />
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-zinc-800 border border-zinc-700 text-gray-400 font-bold text-[9px] flex items-center justify-center">
+                    0
+                  </span>
+                </button>
+              )}
 
               {/* User Account / Auth */}
               {user ? (
@@ -289,6 +322,52 @@ const Navbar = ({
               {link.label}
             </a>
           ))}
+        </div>
+      )}
+
+      {/* ── Guest Shopping Bag Auth Prompt Modal ── */}
+      {showGuestModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#100f0d] border border-[#25211b] max-w-sm w-full rounded-2xl p-6 text-center shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-[#181511] border border-[#C6A87C]/40 flex items-center justify-center text-[#C6A87C] mx-auto shadow-[0_0_20px_rgba(198,168,124,0.15)]">
+              <i className="ri-shopping-bag-3-line text-2xl" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white">Sign In to Access Bag</h3>
+              <p className="text-xs text-[#8a8278] mt-1">
+                Please sign in to your patron account to view your shopping bag, manage atelier selections, and checkout.
+              </p>
+            </div>
+            <div className="space-y-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowGuestModal(false);
+                  navigate('/login', { state: { from: location } });
+                }}
+                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-xs uppercase tracking-wider block cursor-pointer hover:opacity-90 transition-opacity"
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowGuestModal(false);
+                  navigate('/register');
+                }}
+                className="w-full py-2.5 rounded-xl bg-[#14120e] border border-[#2a2520] hover:border-[#C6A87C]/50 text-gray-300 hover:text-white text-xs font-semibold uppercase tracking-wider block cursor-pointer transition-colors"
+              >
+                Create Account
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowGuestModal(false)}
+              className="text-xs text-[#665f55] hover:text-gray-400 cursor-pointer block mx-auto pt-1"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
     </header>

@@ -8,6 +8,7 @@ import PublicAuthRoute from "@/components/PublicAuthRoute";
 import Dashboard from "@/features/product/pages/Dashboard";
 import Home from "@/features/product/pages/Home";
 import ProductDetail from "@/features/product/pages/ProductDetail";
+import Cart from "@/features/cart/pages/Cart";
 
 export const routes = createBrowserRouter([
     {
@@ -15,6 +16,14 @@ export const routes = createBrowserRouter([
         element: (
             <BuyerRoute>
                 <Home />
+            </BuyerRoute>
+        )
+    },
+    {
+        path: "/cart",
+        element: (
+            <BuyerRoute>
+                <Cart />
             </BuyerRoute>
         )
     },

@@ -5,6 +5,7 @@ import Navbar from '../../../components/Navbar';
 import ShinyText from '../../../components/ShinyText';
 import { useProduct } from '../hooks/useProduct';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { useCart } from '../../cart/hook/useCart';
 
 const formatCurrency = (amount = 0, currency = 'INR') => {
   const symbols = { INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'AED ', CAD: 'CA$' };
@@ -18,11 +19,12 @@ const Home = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { handleGetAllProducts, allProducts = [], loading, error } = useProduct();
+  const { handleAddItem } = useCart();
 
   // Local State
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [bagNotification, setBagNotification] = useState(null);
+  const [bagToast, setBagToast] = useState(null);
 
   // Authentication & Purchase Modals
   const [authPromptProduct, setAuthPromptProduct] = useState(null);
@@ -65,16 +67,31 @@ const Home = () => {
     setPurchaseSuccessProduct(product);
   };
 
-  const handleAddToBag = (product, e) => {
+  const handleAddToBag = async (product, e) => {
     e?.stopPropagation();
     if (!user) {
       setAuthPromptProduct(product);
       return;
     }
-    setBagNotification(product.title);
-    setTimeout(() => {
-      setBagNotification(null);
-    }, 2800);
+    try {
+      await handleAddItem({
+        productId: product._id,
+        quantity: 1,
+      });
+      setBagToast({
+        title: product.title,
+        image: getImageUrl(product.images?.[0], 200),
+        specs: product.description ? product.description.slice(0, 48) + '...' : 'Atelier Master Piece',
+        price: product.price?.amount || 0,
+        currency: product.price?.currency || 'INR',
+        quantity: 1,
+      });
+      setTimeout(() => {
+        setBagToast(null);
+      }, 4000);
+    } catch (err) {
+      console.error("Failed to add to bag:", err);
+    }
   };
 
   return (
@@ -82,15 +99,57 @@ const Home = () => {
       {/* ── Storefront Navigation Bar ── */}
       <Navbar variant="default" />
 
-      {/* ── Bag Toast Notification ── */}
-      {bagNotification && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#161410] border border-[#C6A87C]/60 text-white text-xs px-4 py-3 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] flex items-center gap-3 animate-in fade-in slide-in-from-bottom-3 duration-300">
-          <div className="w-6 h-6 rounded-full bg-[#C6A87C] text-[#080806] flex items-center justify-center font-bold text-xs">
-            <i className="ri-check-line" />
+      {/* ── Rich Toast Notification (Small Image, Name, Short Info, View Bag CTA) ── */}
+      {bagToast && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-[#12100d]/95 backdrop-blur-xl border border-[#C6A87C]/60 rounded-2xl p-3.5 sm:p-4 shadow-[0_10px_40px_rgba(0,0,0,0.85)] flex items-start gap-3.5 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="w-13 h-16 rounded-xl bg-[#181510] border border-[#2b251d] overflow-hidden shrink-0">
+            {bagToast.image ? (
+              <img
+                src={bagToast.image}
+                alt={bagToast.title}
+                className="w-full h-full object-cover object-top"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-[#C6A87C]">
+                <i className="ri-vip-crown-2-line text-lg" />
+              </div>
+            )}
           </div>
-          <div>
-            <span className="font-semibold text-white block">{bagNotification}</span>
-            <span className="text-[10px] text-[#C6A87C]">Added to your Shopping Bag</span>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#C6A87C] flex items-center gap-1">
+                <i className="ri-checkbox-circle-fill text-emerald-400 text-xs" />
+                Added to Shopping Bag
+              </span>
+              <button
+                type="button"
+                onClick={() => setBagToast(null)}
+                className="text-gray-400 hover:text-white text-xs cursor-pointer p-0.5"
+              >
+                <i className="ri-close-line" />
+              </button>
+            </div>
+
+            <h4 className="text-xs font-bold text-white tracking-tight truncate mt-0.5">
+              {bagToast.title}
+            </h4>
+
+            <p className="text-[10px] text-[#8a8278] truncate mt-0.5">
+              {bagToast.specs}
+            </p>
+
+            <div className="flex items-center justify-between pt-2 mt-1 border-t border-[#1f1b15]">
+              <span className="text-xs font-mono font-bold text-white">
+                {formatCurrency(bagToast.price * bagToast.quantity, bagToast.currency)}
+              </span>
+              <Link
+                to="/cart"
+                className="px-3 py-1 rounded-lg bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-[10px] uppercase tracking-wider hover:opacity-90 transition-opacity"
+              >
+                View Bag
+              </Link>
+            </div>
           </div>
         </div>
       )}

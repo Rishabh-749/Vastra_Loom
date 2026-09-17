@@ -4,6 +4,7 @@ import 'remixicon/fonts/remixicon.css';
 import Navbar from '../../../components/Navbar';
 import { useProduct } from '../hooks/useProduct';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { useCart } from '../../cart/hook/useCart';
 import { getImageUrl } from '../../../utils/image';
 
 const formatCurrency = (amount = 0, currency = 'INR') => {
@@ -36,10 +37,15 @@ const ProductDetail = () => {
     handleAddProductVariant,
     handleUpdateVariantStock,
     handleUpdateProductStock,
+    handleGetAllProducts,
+    allProducts,
     currentProduct,
     loading: apiLoading,
     error: apiError,
   } = useProduct();
+
+  const { handleAddItem } = useCart();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   // Active Variant State (null strictly = Authentic Base Product by default)
   const [selectedVariant, setSelectedVariant] = useState(null);
@@ -77,10 +83,24 @@ const ProductDetail = () => {
     setSelectedVariant(null);
     setActiveImageIndex(0);
     setImgLoadError(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     if (id) {
       handleGetProductDetails(id).catch(() => {});
     }
   }, [id]);
+
+  // Load all products for similar recommendations if not already in store
+  useEffect(() => {
+    if (!allProducts || allProducts.length === 0) {
+      handleGetAllProducts().catch(() => {});
+    }
+  }, [allProducts]);
+
+  // Curate similar pieces (excluding the current active piece)
+  const similarProducts = useMemo(() => {
+    if (!allProducts || allProducts.length === 0) return [];
+    return allProducts.filter((p) => p && p._id && p._id !== id).slice(0, 4);
+  }, [allProducts, id]);
 
   // Sync stock inputs when currentProduct updates
   useEffect(() => {
@@ -225,24 +245,58 @@ const ProductDetail = () => {
   }, [activeImages, activeImageIndex, imgLoadError, currentProduct]);
 
   // Customer Actions
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!user) {
       setAuthPromptProduct(currentProduct);
       return;
     }
-    const variantLabel = selectedVariant
-      ? ` (${Object.values(getVariantAttributes(selectedVariant)).join(' / ')})`
-      : '';
-    setBagToast(`${currentProduct.title}${variantLabel}`);
-    setTimeout(() => setBagToast(null), 3000);
+    setIsAddingToCart(true);
+    try {
+      await handleAddItem({
+        productId: currentProduct._id,
+        variantId: selectedVariant?._id || null,
+        quantity,
+      });
+
+      const specsSummary = selectedVariant
+        ? Object.entries(getVariantAttributes(selectedVariant))
+            .map(([k, v]) => `${k}: ${v}`)
+            .join(' • ')
+        : 'Atelier Master Piece';
+
+      setBagToast({
+        title: currentProduct.title,
+        image: heroImageUrl || getImageUrl(currentProduct?.images?.[0], 200),
+        specs: specsSummary,
+        price: activePrice,
+        currency: activeCurrency,
+        quantity,
+      });
+      setTimeout(() => setBagToast(null), 4000);
+    } catch (err) {
+      setStockFeedback(err.response?.data?.message || err.message || 'Failed to add item to bag');
+      setTimeout(() => setStockFeedback(null), 3500);
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (!user) {
       setAuthPromptProduct(currentProduct);
       return;
     }
-    setPurchaseSuccessProduct(currentProduct);
+    try {
+      await handleAddItem({
+        productId: currentProduct._id,
+        variantId: selectedVariant?._id || null,
+        quantity,
+      });
+      navigate('/cart');
+    } catch (err) {
+      setStockFeedback(err.response?.data?.message || err.message || 'Failed to reserve piece');
+      setTimeout(() => setStockFeedback(null), 3500);
+    }
   };
 
   // Seller stock updates
@@ -399,22 +453,60 @@ const ProductDetail = () => {
   if (!currentProduct) return null;
 
   return (
-    <div className="min-h-screen lg:h-screen w-full bg-[#080806] font-sans text-gray-100 flex flex-col lg:overflow-hidden selection:bg-[#C6A87C]/30 selection:text-[#fff8e7]">
+    <div className="min-h-screen w-full bg-[#080806] font-sans text-gray-100 flex flex-col selection:bg-[#C6A87C]/30 selection:text-[#fff8e7]">
       {/* ── Fixed Header ── */}
       <Navbar
         variant={isSeller ? 'seller' : 'default'}
         subtitle={isSeller ? 'Atelier Studio' : 'Haute Couture'}
       />
 
-      {/* ── Toast Notifications ── */}
+      {/* ── Rich Toast Notification (Small Image, Name, Short Info, View Bag CTA) ── */}
       {bagToast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#14120e] border border-[#C6A87C]/60 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="w-5 h-5 rounded-full bg-[#C6A87C] text-[#080806] flex items-center justify-center font-bold text-xs">
-            <i className="ri-check-line" />
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-[#12100d]/95 backdrop-blur-xl border border-[#C6A87C]/60 rounded-2xl p-3.5 sm:p-4 shadow-[0_10px_40px_rgba(0,0,0,0.85)] flex items-start gap-3.5 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          {/* Garment Image */}
+          <div className="w-13 h-16 rounded-xl bg-[#181510] border border-[#2b251d] overflow-hidden shrink-0">
+            <img
+              src={bagToast.image}
+              alt={bagToast.title}
+              className="w-full h-full object-cover object-top"
+            />
           </div>
-          <div>
-            <span className="font-semibold text-white block">{bagToast}</span>
-            <span className="text-[10px] text-[#C6A87C]">Added to Shopping Bag</span>
+
+          {/* Details */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#C6A87C] flex items-center gap-1">
+                <i className="ri-checkbox-circle-fill text-emerald-400 text-xs" />
+                Added to Shopping Bag
+              </span>
+              <button
+                type="button"
+                onClick={() => setBagToast(null)}
+                className="text-gray-400 hover:text-white text-xs cursor-pointer p-0.5"
+              >
+                <i className="ri-close-line" />
+              </button>
+            </div>
+
+            <h4 className="text-xs font-bold text-white tracking-tight truncate mt-0.5">
+              {bagToast.title}
+            </h4>
+
+            <p className="text-[10px] text-[#8a8278] truncate mt-0.5">
+              {bagToast.specs}
+            </p>
+
+            <div className="flex items-center justify-between pt-2 mt-1 border-t border-[#1f1b15]">
+              <span className="text-xs font-mono font-bold text-white">
+                {formatCurrency(bagToast.price * bagToast.quantity, bagToast.currency)}
+              </span>
+              <Link
+                to="/cart"
+                className="px-3 py-1 rounded-lg bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-[10px] uppercase tracking-wider hover:opacity-90 transition-opacity"
+              >
+                View Bag
+              </Link>
+            </div>
           </div>
         </div>
       )}
@@ -426,8 +518,8 @@ const ProductDetail = () => {
         </div>
       )}
 
-      {/* ── Main Viewport Container (Centered, balanced margins on all 4 sides, fits in 1 screen) ── */}
-      <div className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 flex flex-col justify-center lg:overflow-hidden">
+      {/* ── Main Hero Stage Container (Centered, balanced margins on all 4 sides, fits in 1 screen fold) ── */}
+      <div className="min-h-[calc(100vh-4.5rem)] max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 flex flex-col justify-center">
         
         {/* Subtle top bar: Left Back Button + Right Seller Inventory Button (No separate wide breadcrumb row!) */}
         <div className="flex items-center justify-between pb-2 shrink-0">
@@ -736,10 +828,11 @@ const ProductDetail = () => {
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  className="w-full py-2.5 sm:py-3 px-3 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-xs uppercase tracking-wider shadow-[0_4px_20px_rgba(198,168,124,0.25)] hover:shadow-[0_6px_25px_rgba(198,168,124,0.4)] hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  disabled={isAddingToCart || activeStock <= 0}
+                  className="w-full py-2.5 sm:py-3 px-3 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-xs uppercase tracking-wider shadow-[0_4px_20px_rgba(198,168,124,0.25)] hover:shadow-[0_6px_25px_rgba(198,168,124,0.4)] hover:scale-[1.01] active:scale-95 disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <i className="ri-shopping-bag-3-line text-sm" />
-                  ADD TO CART
+                  <i className={isAddingToCart ? "ri-loader-4-line animate-spin text-sm" : "ri-shopping-bag-3-line text-sm"} />
+                  {isAddingToCart ? 'ADDING...' : 'ADD TO CART'}
                 </button>
 
                 <button
@@ -771,6 +864,95 @@ const ProductDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Similar Creations / You May Also Like Section ── */}
+      {similarProducts && similarProducts.length > 0 && (
+        <section className="w-full border-t border-[#1c1914] bg-[#0a0907] py-12 sm:py-16">
+          <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 pb-4 border-b border-[#1f1b15] gap-3">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#C6A87C] flex items-center gap-1.5">
+                  <i className="ri-vip-crown-fill text-xs" />
+                  CURATED ATELIER COMPANIONS
+                </span>
+                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight mt-1">
+                  You May Also Like
+                </h2>
+                <p className="text-xs text-[#8a8278] mt-1 max-w-md">
+                  Handcrafted pieces tailored with artisanal precision in matching silks and imperial silhouettes.
+                </p>
+              </div>
+              <Link
+                to="/#catalog"
+                className="text-xs text-[#C6A87C] hover:underline uppercase tracking-wider font-semibold flex items-center gap-1 self-start sm:self-auto"
+              >
+                <span>Explore Entire Catalog</span>
+                <i className="ri-arrow-right-line" />
+              </Link>
+            </div>
+
+            {/* Grid of Similar Pieces */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {similarProducts.map((prod) => {
+                const thumb = getImageUrl(prod.images?.[0], 400);
+                return (
+                  <Link
+                    key={prod._id}
+                    to={`/product/${prod._id}`}
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    className="group flex flex-col rounded-2xl bg-[#11100d] border border-[#221e18] hover:border-[#C6A87C]/60 transition-all duration-300 overflow-hidden shadow-xl hover:shadow-[0_8px_30px_rgba(198,168,124,0.15)] hover:-translate-y-1"
+                  >
+                    {/* Image Frame */}
+                    <div className="relative aspect-[3/4] w-full bg-[#14120e] overflow-hidden">
+                      {thumb ? (
+                        <img
+                          src={thumb}
+                          alt={prod.title}
+                          className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-[#554e44] p-4 text-center">
+                          <i className="ri-vip-crown-2-line text-2xl text-[#C6A87C]" />
+                          <span className="text-[10px] uppercase tracking-widest text-[#C6A87C] font-semibold mt-1">
+                            VASTRA LOOM
+                          </span>
+                        </div>
+                      )}
+                      <div className="absolute top-2.5 left-2.5">
+                        <span className="px-2 py-0.5 rounded bg-black/80 backdrop-blur text-[8px] font-extrabold uppercase tracking-widest text-[#C6A87C] border border-[#C6A87C]/25">
+                          BESPOKE
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Card Meta */}
+                    <div className="p-4 flex-1 flex flex-col justify-between space-y-2">
+                      <div>
+                        <span className="text-[9px] uppercase tracking-[0.2em] text-[#7a7267] font-medium block">
+                          ATELIER CREATION
+                        </span>
+                        <h3 className="text-sm font-bold text-white group-hover:text-[#C6A87C] transition-colors line-clamp-1 mt-0.5">
+                          {prod.title}
+                        </h3>
+                      </div>
+
+                      <div className="pt-2 border-t border-[#1c1914] flex items-center justify-between">
+                        <span className="text-sm font-bold font-mono text-white">
+                          {formatCurrency(prod.price?.amount, prod.price?.currency || 'INR')}
+                        </span>
+                        <span className="text-[10px] text-[#C6A87C] group-hover:translate-x-1 transition-transform flex items-center gap-0.5 uppercase tracking-wider font-semibold">
+                          <span>View</span>
+                          <i className="ri-arrow-right-s-line" />
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ══════════════════════════════════════════════════════════════════
           SLIDE-OUT SELLER ATELIER DRAWER (STOCK & VARIANT CONTROLS)
