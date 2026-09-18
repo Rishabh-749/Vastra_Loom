@@ -37,9 +37,12 @@ const Navbar = ({
     { label: 'Heritage', href: '/#heritage' },
   ];
 
-  const onSignOut = () => {
-    handleLogout();
-    navigate('/login', { replace: true });
+  const onSignOut = async () => {
+    try {
+      await handleLogout();
+    } finally {
+      navigate('/login', { replace: true });
+    }
   };
 
   return (

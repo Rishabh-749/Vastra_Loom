@@ -1,5 +1,6 @@
 import { setError, setUser, setIsAuthChecked, setLoading } from "../state/auth.slice";
-import { register, login, getMe } from "../services/auth.api";
+import { register, login, getMe, logout } from "../services/auth.api";
+import { clearCartState } from "../../cart/state/cart.slice";
 import { useDispatch, useSelector } from "react-redux";
 
 export const useAuth = () => {
@@ -54,10 +55,19 @@ export const useAuth = () => {
         }
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem("user");
-        dispatch(setUser(null));
-        dispatch(setIsAuthChecked(true));
+    const handleLogout = async () => {
+        dispatch(setLoading(true));
+        try {
+            await logout();
+        } catch (err) {
+            console.error("Logout request error:", err);
+        } finally {
+            localStorage.removeItem("user");
+            dispatch(setUser(null));
+            dispatch(setIsAuthChecked(true));
+            dispatch(clearCartState());
+            dispatch(setLoading(false));
+        }
     };
 
     return {

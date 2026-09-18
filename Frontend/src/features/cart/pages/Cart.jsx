@@ -256,6 +256,21 @@ const Cart = () => {
             ══════════════════════════════════════════════════════════════ */}
             <div className="lg:col-span-7 xl:col-span-8 space-y-4">
               
+              {/* Atelier Live Price Synchronization Alert Banner */}
+              {items.some((it) => it.priceStatus === 'increased' || it.priceStatus === 'decreased') && (
+                <div className="p-3.5 rounded-xl bg-[#16120d] border border-[#C6A87C]/50 text-xs text-gray-200 flex items-start gap-2.5 shadow-lg animate-in fade-in duration-300">
+                  <i className="ri-information-fill text-[#C6A87C] text-base shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold text-[#C6A87C] uppercase tracking-wider text-[11px] block">
+                      Live Atelier Price Synchronization
+                    </span>
+                    <p className="text-[11px] text-gray-300 mt-0.5 leading-relaxed">
+                      One or more pieces in your shopping bag had a price revision by their master artisans. Your subtotals and total reservation have been synchronized with the latest catalog rates.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {items.map((item) => {
                 const itemKey = `${item.product._id}_${item.variant || 'base'}`;
                 const isMutating = actionLoadingId === itemKey;
@@ -338,15 +353,41 @@ const Cart = () => {
                           </div>
                         </div>
 
-                        {/* 3. Unit Price & Live Stock Status */}
-                        <div className="flex items-center justify-between pt-1">
-                          <div className="flex items-baseline gap-2">
+                        {/* 3. Unit Price & Live Stock Status & Price Revisions */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                          <div className="flex flex-wrap items-center gap-2">
                             <span className="text-xs text-[#7a7267] uppercase tracking-wider font-medium">
                               Unit Price:
                             </span>
-                            <span className="text-xs font-mono font-semibold text-gray-300">
-                              {formatCurrency(item.price?.amount, item.price?.currency || currency)}
+                            <span className="text-xs font-mono font-semibold text-white">
+                              {formatCurrency(item.unitPrice || item.price?.amount, item.currency || currency)}
                             </span>
+
+                            {/* Seller Price Increase Warning (Red) */}
+                            {item.priceStatus === 'increased' && (
+                              <span
+                                title={`Price was ${formatCurrency(item.originalPrice, item.currency || currency)} when added`}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-950/80 border border-red-700/80 text-red-300 text-[10px] font-semibold tracking-wide animate-pulse shadow-sm"
+                              >
+                                <i className="ri-error-warning-fill text-red-400 text-xs" />
+                                <span>
+                                  Price revised: was {formatCurrency(item.originalPrice, item.currency || currency)} (+{formatCurrency(item.priceDiff, item.currency || currency)})
+                                </span>
+                              </span>
+                            )}
+
+                            {/* Seller Price Reduction Highlight (Green) */}
+                            {item.priceStatus === 'decreased' && (
+                              <span
+                                title={`Price was ${formatCurrency(item.originalPrice, item.currency || currency)} when added`}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-950/80 border border-emerald-600/80 text-emerald-300 text-[10px] font-semibold tracking-wide shadow-sm"
+                              >
+                                <i className="ri-price-tag-3-fill text-emerald-400 text-xs" />
+                                <span>
+                                  Price reduced: was {formatCurrency(item.originalPrice, item.currency || currency)} (-{formatCurrency(Math.abs(item.priceDiff), item.currency || currency)})
+                                </span>
+                              </span>
+                            )}
                           </div>
 
                           {/* Stock Status Indicator */}

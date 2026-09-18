@@ -1,7 +1,10 @@
+import mongoose from "mongoose";
 import cartModel from "../models/cart.model.js";
 import productModel from "../models/product.model.js";
 
-// Helper to safely extract variant attributes map or plain object
+/**
+ * Helper to safely extract variant attributes map or plain object
+ */
 const getVariantAttributes = (variant) => {
   if (!variant || !variant.attributes) return {};
   if (variant.attributes instanceof Map) {
@@ -18,136 +21,228 @@ const getVariantAttributes = (variant) => {
 };
 
 /**
- * Format cart document with populated products, resolved variant metadata,
- * resolved images, verified live stock, and calculated totals.
+ * Production-grade MongoDB Aggregation Pipeline for VASTRA LOOM Cart.
+ * 
+ * Features:
+ * 1. Seamlessly handles base products (variant: null) AND custom variants.
+ * 2. Dynamically compares live seller price vs original cart price.
+ * 3. Emits `priceStatus`: 'increased' | 'decreased' | 'unchanged' and `priceDiff`.
+ * 4. Calculates `lineTotal` using the seller's current updated price.
+ * 5. Computes overall `totalPrice` and `totalItems` directly in the database.
+ * 6. Attaches liveStock, outOfStock flags, resolved images, and formatted attributes.
+ */
+export const getAggregatedCart = async (userId) => {
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
+  // Ensure user cart document exists in database
+  let existingCart = await cartModel.findOne({ user: userObjectId });
+  if (!existingCart) {
+    existingCart = await cartModel.create({ user: userObjectId, items: [] });
+  }
+
+  if (!existingCart.items || existingCart.items.length === 0) {
+    return {
+      _id: existingCart._id,
+      user: existingCart.user,
+      items: [],
+      totalPrice: 0,
+      totalItems: 0,
+      currency: "INR",
+    };
+  }
+
+  const pipeline = [
+    { $match: { user: userObjectId } },
+    { $unwind: { path: "$items", preserveNullAndEmptyArrays: true } },
+    {
+      $lookup: {
+        from: "products",
+        localField: "items.product",
+        foreignField: "_id",
+        as: "productDoc",
+      },
+    },
+    { $unwind: { path: "$productDoc", preserveNullAndEmptyArrays: true } },
+    // Filter out items whose product no longer exists in catalog
+    { $match: { productDoc: { $exists: true, $ne: null } } },
+    {
+      $addFields: {
+        matchedVariant: {
+          $cond: {
+            if: {
+              $and: [
+                { $ne: ["$items.variant", null] },
+                { $isArray: "$productDoc.variants" },
+              ],
+            },
+            then: {
+              $arrayElemAt: [
+                {
+                  $filter: {
+                    input: "$productDoc.variants",
+                    as: "v",
+                    cond: { $eq: ["$$v._id", "$items.variant"] },
+                  },
+                },
+                0,
+              ],
+            },
+            else: null,
+          },
+        },
+      },
+    },
+    {
+      $addFields: {
+        originalPrice: { $ifNull: ["$items.price.amount", 0] },
+        liveSellerPrice: {
+          $ifNull: [
+            "$matchedVariant.price.amount",
+            { $ifNull: ["$productDoc.price.amount", "$items.price.amount"] },
+          ],
+        },
+        currency: {
+          $ifNull: [
+            "$matchedVariant.price.currency",
+            {
+              $ifNull: [
+                "$productDoc.price.currency",
+                { $ifNull: ["$items.price.currency", "INR"] },
+              ],
+            },
+          ],
+        },
+        liveStock: {
+          $cond: {
+            if: { $ne: ["$matchedVariant", null] },
+            then: { $ifNull: ["$matchedVariant.stock", 0] },
+            else: { $ifNull: ["$productDoc.stock", 0] },
+          },
+        },
+      },
+    },
+    {
+      $addFields: {
+        priceDiff: { $subtract: ["$liveSellerPrice", "$originalPrice"] },
+        priceStatus: {
+          $switch: {
+            branches: [
+              {
+                case: { $gt: ["$liveSellerPrice", "$originalPrice"] },
+                then: "increased",
+              },
+              {
+                case: { $lt: ["$liveSellerPrice", "$originalPrice"] },
+                then: "decreased",
+              },
+            ],
+            default: "unchanged",
+          },
+        },
+        lineTotal: {
+          $multiply: [
+            { $ifNull: ["$items.quantity", 1] },
+            "$liveSellerPrice",
+          ],
+        },
+      },
+    },
+    {
+      $group: {
+        _id: "$_id",
+        user: { $first: "$user" },
+        totalPrice: { $sum: "$lineTotal" },
+        totalItems: {
+          $sum: {
+            $cond: {
+              if: { $ne: ["$items", null] },
+              then: { $ifNull: ["$items.quantity", 1] },
+              else: 0,
+            },
+          },
+        },
+        currency: { $first: "$currency" },
+        items: {
+          $push: {
+            _id: "$items._id",
+            product: {
+              _id: "$productDoc._id",
+              title: "$productDoc.title",
+              description: "$productDoc.description",
+              images: "$productDoc.images",
+              stock: "$productDoc.stock",
+            },
+            variant: "$items.variant",
+            variantData: "$matchedVariant",
+            quantity: "$items.quantity",
+            originalPrice: "$originalPrice",
+            unitPrice: "$liveSellerPrice",
+            price: {
+              amount: "$liveSellerPrice",
+              currency: "$currency",
+            },
+            priceDiff: "$priceDiff",
+            priceStatus: "$priceStatus",
+            currency: "$currency",
+            lineTotal: "$lineTotal",
+            liveStock: "$liveStock",
+            isOutOfStock: { $lte: ["$liveStock", 0] },
+            exceedsStock: { $gt: ["$items.quantity", "$liveStock"] },
+            resolvedImage: {
+              $ifNull: [
+                { $arrayElemAt: ["$matchedVariant.images.url", 0] },
+                { $arrayElemAt: ["$productDoc.images.url", 0] },
+              ],
+            },
+            attributes: {
+              $ifNull: [
+                "$matchedVariant.attributes",
+                { Edition: "Atelier Master Piece", Craft: "Pure Handloom" },
+              ],
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const results = await cartModel.aggregate(pipeline);
+  if (!results || results.length === 0) {
+    return {
+      _id: existingCart._id,
+      user: existingCart.user,
+      items: [],
+      totalPrice: 0,
+      totalItems: 0,
+      currency: "INR",
+    };
+  }
+
+  return results[0];
+};
+
+/**
+ * Formats cart using the aggregation pipeline
  */
 export const formatCartResponse = async (cartDoc) => {
   if (!cartDoc) return null;
-
-  // Ensure items.product is populated
-  if (!cartDoc.populated("items.product")) {
-    await cartDoc.populate("items.product");
-  }
-
-  let totalPrice = 0;
-  let totalItems = 0;
-  let currency = "INR";
-
-  const formattedItems = cartDoc.items
-    .filter((item) => Boolean(item.product)) // filter out deleted products
-    .map((item) => {
-      const product = item.product;
-      const variantId = item.variant ? item.variant.toString() : null;
-      let matchedVariant = null;
-
-      if (variantId && product.variants && product.variants.length > 0) {
-        matchedVariant = product.variants.find(
-          (v) => v._id && v._id.toString() === variantId
-        );
-      }
-
-      // Determine attributes, live stock, image, and price
-      let resolvedAttributes = {};
-      let liveStock = product.stock || 0;
-      let resolvedImage = product.images?.[0]?.url || "";
-      let itemPrice = item.price?.amount
-        ? item.price
-        : product.price || { amount: 0, currency: "INR" };
-
-      if (matchedVariant) {
-        resolvedAttributes = getVariantAttributes(matchedVariant);
-        liveStock = matchedVariant.stock ?? 0;
-        if (matchedVariant.images && matchedVariant.images.length > 0) {
-          resolvedImage = matchedVariant.images[0]?.url || resolvedImage;
-        }
-        if (matchedVariant.price && matchedVariant.price.amount !== undefined) {
-          itemPrice = matchedVariant.price;
-        }
-      } else if (variantId) {
-        // Variant was removed or not found
-        resolvedAttributes = { Edition: "Custom Variant" };
-        liveStock = 0;
-      } else {
-        // Base Master Piece
-        resolvedAttributes = {
-          Edition: "Atelier Master Piece",
-          Craft: "Pure Handloom",
-        };
-      }
-
-      const unitPriceAmount = Number(itemPrice.amount) || 0;
-      const quantity = Number(item.quantity) || 1;
-      const lineTotal = unitPriceAmount * quantity;
-
-      if (itemPrice.currency) {
-        currency = itemPrice.currency;
-      }
-
-      totalPrice += lineTotal;
-      totalItems += quantity;
-
-      return {
-        _id: item._id,
-        product: {
-          _id: product._id,
-          title: product.title,
-          description: product.description,
-          stock: product.stock,
-          images: product.images,
-        },
-        variant: variantId,
-        variantData: matchedVariant
-          ? {
-              _id: matchedVariant._id,
-              stock: matchedVariant.stock,
-              price: matchedVariant.price,
-              attributes: resolvedAttributes,
-            }
-          : null,
-        attributes: resolvedAttributes,
-        resolvedImage,
-        quantity,
-        price: {
-          amount: unitPriceAmount,
-          currency: itemPrice.currency || "INR",
-        },
-        lineTotal,
-        liveStock,
-        isOutOfStock: liveStock <= 0,
-        exceedsStock: quantity > liveStock,
-      };
-    });
-
-  return {
-    _id: cartDoc._id,
-    user: cartDoc.user,
-    items: formattedItems,
-    totalItems,
-    totalPrice,
-    currency,
-  };
+  const userId = cartDoc.user?._id || cartDoc.user || cartDoc;
+  return await getAggregatedCart(userId);
 };
 
 /**
  * @route GET /api/cart
- * @desc Get the authenticated user's cart
+ * @desc Get the authenticated user's cart calculated via MongoDB aggregation pipeline
  */
 export const getCart = async (req, res) => {
   try {
     const userId = req.user._id;
-
-    let cart = await cartModel.findOne({ user: userId }).populate("items.product");
-
-    if (!cart) {
-      cart = await cartModel.create({ user: userId, items: [] });
-    }
-
-    const formattedCart = await formatCartResponse(cart);
+    const cart = await getAggregatedCart(userId);
 
     return res.status(200).json({
       message: "Cart fetched successfully",
       success: true,
-      cart: formattedCart,
+      cart,
     });
   } catch (error) {
     console.error("Error in getCart:", error);
@@ -256,14 +351,12 @@ export const addToCart = async (req, res) => {
     }
 
     await cart.save();
-    await cart.populate("items.product");
-
-    const formattedCart = await formatCartResponse(cart);
+    const aggregatedCart = await getAggregatedCart(req.user._id);
 
     return res.status(200).json({
       message: "Product added to cart successfully",
       success: true,
-      cart: formattedCart,
+      cart: aggregatedCart,
     });
   } catch (error) {
     console.error("Error in addToCart:", error);
@@ -316,12 +409,11 @@ export const updateCartItemQuantity = async (req, res) => {
     if (!product) {
       cart.items.splice(itemIndex, 1);
       await cart.save();
-      await cart.populate("items.product");
-      const formatted = await formatCartResponse(cart);
+      const aggregated = await getAggregatedCart(req.user._id);
       return res.status(200).json({
         message: "Product no longer available, removed from cart",
         success: true,
-        cart: formatted,
+        cart: aggregated,
       });
     }
 
@@ -355,13 +447,12 @@ export const updateCartItemQuantity = async (req, res) => {
     }
 
     await cart.save();
-    await cart.populate("items.product");
-    const formatted = await formatCartResponse(cart);
+    const aggregated = await getAggregatedCart(req.user._id);
 
     return res.status(200).json({
       message: "Cart quantity updated successfully",
       success: true,
-      cart: formatted,
+      cart: aggregated,
     });
   } catch (error) {
     console.error("Error in updateCartItemQuantity:", error);
@@ -403,13 +494,12 @@ export const removeCartItem = async (req, res) => {
     });
 
     await cart.save();
-    await cart.populate("items.product");
-    const formatted = await formatCartResponse(cart);
+    const aggregated = await getAggregatedCart(req.user._id);
 
     return res.status(200).json({
       message: "Item removed from cart",
       success: true,
-      cart: formatted,
+      cart: aggregated,
     });
   } catch (error) {
     console.error("Error in removeCartItem:", error);
@@ -431,16 +521,12 @@ export const clearCart = async (req, res) => {
       cart.items = [];
       await cart.save();
     }
+    const aggregated = await getAggregatedCart(req.user._id);
 
     return res.status(200).json({
       message: "Cart cleared successfully",
       success: true,
-      cart: {
-        items: [],
-        totalItems: 0,
-        totalPrice: 0,
-        currency: "INR",
-      },
+      cart: aggregated,
     });
   } catch (error) {
     console.error("Error in clearCart:", error);
@@ -449,4 +535,4 @@ export const clearCart = async (req, res) => {
       success: false,
     });
   }
-};
+};

@@ -10,6 +10,8 @@ const authRouter = express.Router();
 
 authRouter.post("/register", validateRegisterUser, authController.registerController);
 authRouter.post("/login", validateLoginUser, authController.loginController);
+authRouter.post("/logout", authController.logoutController);
+authRouter.get("/logout", authController.logoutController);
 authRouter.get("/me", authenticateUser, (req, res) => {
     res.status(200).json({
         success: true,
