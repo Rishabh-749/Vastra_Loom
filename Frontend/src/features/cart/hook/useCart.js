@@ -91,6 +91,10 @@ export const useCart = () => {
     }
   };
 
+  const resetCartState = () => {
+    dispatch(clearCartState());
+  };
+
   return {
     items,
     totalPrice,
@@ -103,5 +107,6 @@ export const useCart = () => {
     handleUpdateQuantity,
     handleRemoveItem,
     handleClearCart,
+    resetCartState,
   };
 };

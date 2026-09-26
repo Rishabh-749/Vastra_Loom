@@ -5,6 +5,8 @@ import Navbar from '../../../components/Navbar';
 import { useCart } from '../hook/useCart';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { getImageUrl } from '../../../utils/image';
+import { createPaymentOrder, verifyPayment } from '../../payment/services/payment.api';
+import { loadRazorpayScript } from '../../../utils/loadRazorpay';
 
 const formatCurrency = (amount = 0, currency = 'INR') => {
   const code = currency?.toUpperCase() === 'INR' ? 'INR' : currency;
@@ -24,12 +26,35 @@ const Cart = () => {
     handleUpdateQuantity,
     handleRemoveItem,
     handleClearCart,
+    resetCartState,
   } = useCart();
 
   const [actionLoadingId, setActionLoadingId] = useState(null);
   const [feedbackToast, setFeedbackToast] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [confirmedOrder, setConfirmedOrder] = useState(null);
+
+  const [shippingDetails, setShippingDetails] = useState({
+    fullName: user?.fullname || '',
+    phoneNumber: user?.contact || '',
+    streetAddress: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: 'India',
+  });
+
+  useEffect(() => {
+    if (user) {
+      setShippingDetails((prev) => ({
+        ...prev,
+        fullName: prev.fullName || user.fullname || '',
+        phoneNumber: prev.phoneNumber || user.contact || '',
+      }));
+    }
+  }, [user]);
 
   // Load cart on mount or user change
   useEffect(() => {
@@ -40,7 +65,7 @@ const Cart = () => {
 
   const showToast = (message) => {
     setFeedbackToast(message);
-    setTimeout(() => setFeedbackToast(null), 3000);
+    setTimeout(() => setFeedbackToast(null), 3500);
   };
 
   // Stepper handlers
@@ -123,7 +148,144 @@ const Cart = () => {
   };
 
   const onProceedToCheckout = () => {
+    if (!items || items.length === 0) {
+      showToast('Your shopping bag is empty');
+      return;
+    }
+
+    const outOfStockItem = items.find((i) => i.isOutOfStock || i.liveStock <= 0);
+    if (outOfStockItem) {
+      showToast(`"${outOfStockItem.product.title}" is out of stock. Please remove it before proceeding.`);
+      return;
+    }
+
+    const exceedsStockItem = items.find((i) => i.exceedsStock);
+    if (exceedsStockItem) {
+      showToast(`Only ${exceedsStockItem.liveStock} piece(s) available for "${exceedsStockItem.product.title}". Please adjust quantity.`);
+      return;
+    }
+
     setCheckoutModalOpen(true);
+  };
+
+  const handlePayWithRazorpay = async (e) => {
+    e?.preventDefault();
+
+    if (!shippingDetails.fullName?.trim()) {
+      showToast('Please specify patron full name');
+      return;
+    }
+    if (!shippingDetails.phoneNumber?.trim()) {
+      showToast('Please enter a valid contact phone number');
+      return;
+    }
+    if (!shippingDetails.streetAddress?.trim()) {
+      showToast('Please specify delivery residence or street address');
+      return;
+    }
+    if (!shippingDetails.city?.trim()) {
+      showToast('Please specify the city');
+      return;
+    }
+    if (!shippingDetails.state?.trim()) {
+      showToast('Please specify the state / province');
+      return;
+    }
+    if (!shippingDetails.postalCode?.trim()) {
+      showToast('Please specify the postal / PIN code');
+      return;
+    }
+
+    setIsProcessingPayment(true);
+
+    try {
+      // 1. Ensure Razorpay SDK script is loaded
+      const isSdkLoaded = await loadRazorpayScript();
+      if (!isSdkLoaded) {
+        showToast('Unable to connect to Razorpay payment gateway. Please check your internet connection.');
+        setIsProcessingPayment(false);
+        return;
+      }
+
+      // 2. Create Razorpay order on server
+      const orderResponse = await createPaymentOrder(shippingDetails);
+
+      if (!orderResponse.success || !orderResponse.razorpayOrderId) {
+        throw new Error(orderResponse.message || 'Failed to initialize payment gateway order');
+      }
+
+      // 3. Configure Razorpay modal options
+      const options = {
+        key: orderResponse.key,
+        amount: orderResponse.amount, // in paise
+        currency: orderResponse.currency || 'INR',
+        name: 'VASTRA LOOM',
+        description: 'Bespoke Haute Couture Reservation',
+        image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=120&q=80',
+        order_id: orderResponse.razorpayOrderId,
+        handler: async function (response) {
+          try {
+            setIsProcessingPayment(true);
+            const verifyRes = await verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              orderId: orderResponse.orderId,
+              shippingAddress: shippingDetails,
+            });
+
+            if (verifyRes.success) {
+              resetCartState();
+              await handleGetCart().catch(() => {});
+              setConfirmedOrder(verifyRes.order);
+              setCheckoutModalOpen(false);
+              showToast('Acquisition Confirmed! Your bespoke reservation is secured.');
+            } else {
+              showToast(verifyRes.message || 'Signature verification failed.');
+            }
+          } catch (verificationError) {
+            console.error('Verification error:', verificationError);
+            showToast(
+              verificationError.response?.data?.message ||
+              verificationError.message ||
+              'Payment verification failed. Please contact atelier concierge.'
+            );
+          } finally {
+            setIsProcessingPayment(false);
+          }
+        },
+        prefill: {
+          name: shippingDetails.fullName || user?.fullname || '',
+          email: user?.email || '',
+          contact: shippingDetails.phoneNumber || '',
+        },
+        notes: {
+          orderId: orderResponse.orderId,
+          atelier: 'VASTRA LOOM Haute Couture',
+        },
+        theme: {
+          color: '#C6A87C',
+          backdrop_color: '#080806',
+        },
+        modal: {
+          ondismiss: function () {
+            setIsProcessingPayment(false);
+            showToast('Payment window dismissed');
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (failRes) {
+        setIsProcessingPayment(false);
+        showToast(failRes.error?.description || 'Payment authorization was declined or cancelled');
+      });
+      rzp.open();
+    } catch (err) {
+      console.error('Order creation error:', err);
+      showToast(err.response?.data?.message || err.message || 'Could not initiate payment order');
+      setIsProcessingPayment(false);
+    }
   };
 
   // ── Guest State ──
@@ -583,53 +745,345 @@ const Cart = () => {
 
       </main>
 
-      {/* ── Checkout Confirmation Modal ── */}
+      {/* ══════════════════════════════════════════════════════════════
+          CHECKOUT MODAL: SHIPPING ADDRESS & RAZORPAY GATEWAY TRIGGER
+      ══════════════════════════════════════════════════════════════ */}
       {checkoutModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#100f0d] border border-[#28231c] max-w-md w-full rounded-2xl p-6 text-center shadow-2xl space-y-5">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-center text-emerald-400 mx-auto shadow-lg">
-              <i className="ri-vip-crown-fill text-2xl text-[#C6A87C]" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
+          <div className="bg-[#100f0d] border border-[#2b251d] max-w-lg w-full rounded-2xl p-6 sm:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.9)] space-y-6 my-8">
+            
+            {/* Header */}
+            <div className="flex items-start justify-between pb-4 border-b border-[#211d17]">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#C6A87C] flex items-center gap-1.5">
+                  <i className="ri-vip-crown-fill text-xs" />
+                  HAUTE COUTURE CHECKOUT
+                </span>
+                <h3 className="text-xl font-bold text-white mt-1">
+                  Patron Delivery Details
+                </h3>
+                <p className="text-xs text-[#8a8278] mt-0.5">
+                  Insured White Glove Courier to your residence
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => !isProcessingPayment && setCheckoutModalOpen(false)}
+                disabled={isProcessingPayment}
+                className="w-8 h-8 rounded-lg bg-[#181511] border border-[#2c261e] text-[#8a8278] hover:text-white hover:border-[#C6A87C]/50 flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30"
+              >
+                <i className="ri-close-line text-base" />
+              </button>
             </div>
-            <div>
+
+            {/* Reservation Line Item Snapshot */}
+            <div className="p-3.5 rounded-xl bg-[#14120e] border border-[#241f19] flex items-center justify-between text-xs">
+              <div>
+                <span className="text-[10px] text-[#7a7267] uppercase tracking-wider block">
+                  Reservation Summary
+                </span>
+                <span className="font-semibold text-gray-200">
+                  {totalItems} Haute Couture Piece{totalItems > 1 ? 's' : ''}
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] text-[#7a7267] uppercase tracking-wider block">
+                  Total Payable
+                </span>
+                <span className="font-bold font-mono text-[#C6A87C] text-sm sm:text-base">
+                  {formatCurrency(totalPrice, currency)}
+                </span>
+              </div>
+            </div>
+
+            {/* Shipping Form */}
+            <form onSubmit={handlePayWithRazorpay} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="text-[10px] uppercase tracking-wider font-semibold text-[#8a8278] block mb-1">
+                    Patron Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={shippingDetails.fullName}
+                    onChange={(e) =>
+                      setShippingDetails({ ...shippingDetails, fullName: e.target.value })
+                    }
+                    placeholder="e.g. Maharaja Vikramaditya"
+                    className="w-full bg-[#0a0907] border border-[#262018] focus:border-[#C6A87C] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-[#504a40] outline-none transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] uppercase tracking-wider font-semibold text-[#8a8278] block mb-1">
+                    Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={shippingDetails.phoneNumber}
+                    onChange={(e) =>
+                      setShippingDetails({ ...shippingDetails, phoneNumber: e.target.value })
+                    }
+                    placeholder="e.g. 9876543210"
+                    className="w-full bg-[#0a0907] border border-[#262018] focus:border-[#C6A87C] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-[#504a40] outline-none transition-colors font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase tracking-wider font-semibold text-[#8a8278] block mb-1">
+                  Residence / Street Address *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={shippingDetails.streetAddress}
+                  onChange={(e) =>
+                    setShippingDetails({ ...shippingDetails, streetAddress: e.target.value })
+                  }
+                  placeholder="e.g. 42 Royal Heritage Palace, Civil Lines"
+                  className="w-full bg-[#0a0907] border border-[#262018] focus:border-[#C6A87C] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-[#504a40] outline-none transition-colors"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-[10px] uppercase tracking-wider font-semibold text-[#8a8278] block mb-1">
+                    City *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={shippingDetails.city}
+                    onChange={(e) =>
+                      setShippingDetails({ ...shippingDetails, city: e.target.value })
+                    }
+                    placeholder="e.g. Jaipur"
+                    className="w-full bg-[#0a0907] border border-[#262018] focus:border-[#C6A87C] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-[#504a40] outline-none transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] uppercase tracking-wider font-semibold text-[#8a8278] block mb-1">
+                    State *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={shippingDetails.state}
+                    onChange={(e) =>
+                      setShippingDetails({ ...shippingDetails, state: e.target.value })
+                    }
+                    placeholder="e.g. Rajasthan"
+                    className="w-full bg-[#0a0907] border border-[#262018] focus:border-[#C6A87C] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-[#504a40] outline-none transition-colors"
+                  />
+                </div>
+
+                <div className="col-span-2 sm:col-span-1">
+                  <label className="text-[10px] uppercase tracking-wider font-semibold text-[#8a8278] block mb-1">
+                    PIN Code *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={shippingDetails.postalCode}
+                    onChange={(e) =>
+                      setShippingDetails({ ...shippingDetails, postalCode: e.target.value })
+                    }
+                    placeholder="e.g. 302001"
+                    className="w-full bg-[#0a0907] border border-[#262018] focus:border-[#C6A87C] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-[#504a40] outline-none transition-colors font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Security & Gateways Guarantee */}
+              <div className="pt-2 flex items-center justify-between text-[10px] text-[#7a7267] border-t border-[#1d1913]">
+                <div className="flex items-center gap-1.5 text-emerald-400">
+                  <i className="ri-shield-check-fill text-xs" />
+                  <span>256-Bit SSL Encrypted</span>
+                </div>
+                <div className="flex items-center gap-1 text-[#C6A87C]">
+                  <i className="ri-bank-card-line text-xs" />
+                  <span>UPI • Cards • NetBanking</span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 space-y-2">
+                <button
+                  type="submit"
+                  disabled={isProcessingPayment}
+                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-xs uppercase tracking-wider shadow-[0_4px_25px_rgba(198,168,124,0.3)] hover:shadow-[0_6px_30px_rgba(198,168,124,0.45)] hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  {isProcessingPayment ? (
+                    <>
+                      <i className="ri-loader-4-line animate-spin text-sm" />
+                      <span>Contacting Razorpay Gateway...</span>
+                    </>
+                  ) : (
+                    <>
+                      <i className="ri-lock-2-line text-sm" />
+                      <span>Authorize Payment of {formatCurrency(totalPrice, currency)}</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCheckoutModalOpen(false)}
+                  disabled={isProcessingPayment}
+                  className="w-full py-2.5 rounded-xl border border-[#231e17] text-[#8a8278] hover:text-white text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
+                >
+                  Return to Bag
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════
+          ACQUISITION CONFIRMED MODAL: ORDER RECEIPT DETAILS
+      ══════════════════════════════════════════════════════════════ */}
+      {confirmedOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto">
+          <div className="bg-[#100f0d] border border-[#C6A87C]/50 max-w-lg w-full rounded-2xl p-6 sm:p-7 shadow-[0_25px_70px_rgba(0,0,0,0.95)] space-y-6 my-8">
+            
+            {/* Crown Embellishment */}
+            <div className="w-16 h-16 rounded-2xl bg-[#17140f] border border-[#C6A87C]/50 flex items-center justify-center text-[#C6A87C] mx-auto shadow-[0_0_30px_rgba(198,168,124,0.25)]">
+              <i className="ri-vip-crown-fill text-3xl text-[#C6A87C]" />
+            </div>
+
+            {/* Title & Patron Greeting */}
+            <div className="text-center space-y-1">
               <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#C6A87C]">
                 HAUTE COUTURE RESERVATION CONFIRMED
               </span>
-              <h3 className="text-xl font-bold text-white mt-1">
-                Atelier Order Reserved
+              <h3 className="text-2xl font-bold text-white tracking-tight">
+                Acquisition Confirmed
               </h3>
-              <p className="text-xs text-[#8a8278] mt-2 leading-relaxed">
-                Thank you for patronizing VASTRA LOOM. Your reservation for {totalItems} couture piece(s) valued at{' '}
-                <strong className="text-white font-mono">{formatCurrency(totalPrice, currency)}</strong> has been recorded in our master atelier registry.
+              <p className="text-xs text-[#8a8278] max-w-sm mx-auto leading-relaxed pt-1">
+                Your payment has been cryptographically verified and your pieces have been reserved in the master atelier vault.
               </p>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-[#14120e] border border-[#241f19] text-left text-xs space-y-1.5">
-              <div className="flex justify-between text-[#7a7267]">
-                <span>Order Reference:</span>
-                <span className="font-mono text-gray-200">VL-{Date.now().toString().slice(-6)}</span>
+            {/* Order Badges */}
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="p-3 rounded-xl bg-[#14120e] border border-[#241f19]">
+                <span className="text-[9px] uppercase tracking-wider text-[#7a7267] block">
+                  Order ID
+                </span>
+                <span className="font-mono font-bold text-[#C6A87C] text-xs">
+                  #{confirmedOrder._id?.slice(-8).toUpperCase()}
+                </span>
               </div>
-              <div className="flex justify-between text-[#7a7267]">
-                <span>Patron:</span>
-                <span className="text-gray-200 font-medium">{user.fullname || user.email}</span>
-              </div>
-              <div className="flex justify-between text-[#7a7267]">
-                <span>Delivery:</span>
-                <span className="text-emerald-400 font-medium">Complimentary White Glove Courier</span>
+
+              <div className="p-3 rounded-xl bg-[#14120e] border border-[#241f19]">
+                <span className="text-[9px] uppercase tracking-wider text-[#7a7267] block">
+                  Payment Reference
+                </span>
+                <span className="font-mono text-gray-200 text-[11px] truncate block" title={confirmedOrder.razorpayPaymentId}>
+                  {confirmedOrder.razorpayPaymentId || confirmedOrder.razorpayOrderId}
+                </span>
               </div>
             </div>
 
-            <div className="space-y-2 pt-2">
+            {/* Pieces Snapshot */}
+            <div className="space-y-2">
+              <span className="text-[10px] uppercase tracking-wider text-[#7a7267] font-semibold block">
+                Reserved Pieces ({confirmedOrder.items?.length || 0})
+              </span>
+              <div className="max-h-40 overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-[#25211b]">
+                {confirmedOrder.items?.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="p-2.5 rounded-xl bg-[#14120e] border border-[#241f19] flex items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-10 h-12 rounded-lg bg-[#181510] border border-[#28221a] overflow-hidden shrink-0">
+                        {item.resolvedImage ? (
+                          <img
+                            src={getImageUrl(item.resolvedImage, 100)}
+                            alt={item.title}
+                            className="w-full h-full object-cover object-top"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[#C6A87C]">
+                            <i className="ri-vip-crown-fill text-xs" />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <span className="font-semibold text-white block leading-tight">
+                          {item.title}
+                        </span>
+                        <span className="text-[10px] text-[#8a8278]">
+                          Qty: {item.quantity} × {formatCurrency(item.price, confirmedOrder.currency)}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="font-mono font-bold text-gray-200">
+                      {formatCurrency(item.quantity * item.price, confirmedOrder.currency)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Delivery & Payment Total Snapshot */}
+            <div className="p-3.5 rounded-xl bg-[#14120e] border border-[#241f19] space-y-2 text-xs">
+              <div className="flex justify-between text-[#8a8278]">
+                <span>Delivery Recipient:</span>
+                <span className="text-gray-200 font-medium">
+                  {confirmedOrder.shippingAddress?.fullName || user.fullname || user.email}
+                </span>
+              </div>
+              <div className="flex justify-between text-[#8a8278]">
+                <span>Shipping Address:</span>
+                <span className="text-gray-200 text-right max-w-[240px] truncate" title={`${confirmedOrder.shippingAddress?.streetAddress}, ${confirmedOrder.shippingAddress?.city}, ${confirmedOrder.shippingAddress?.state} - ${confirmedOrder.shippingAddress?.postalCode}`}>
+                  {confirmedOrder.shippingAddress?.streetAddress
+                    ? `${confirmedOrder.shippingAddress.streetAddress}, ${confirmedOrder.shippingAddress.city}`
+                    : 'Registered Patron Address'}
+                </span>
+              </div>
+              <div className="pt-2 border-t border-[#1f1b15] flex justify-between items-baseline">
+                <span className="font-semibold text-white uppercase tracking-wider text-[11px]">
+                  Total Paid:
+                </span>
+                <span className="font-mono font-bold text-[#C6A87C] text-base">
+                  {formatCurrency(confirmedOrder.totalAmount, confirmedOrder.currency)}
+                </span>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="space-y-2 pt-1">
               <button
                 type="button"
                 onClick={() => {
-                  setCheckoutModalOpen(false);
+                  setConfirmedOrder(null);
                   navigate('/');
                 }}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-xs uppercase tracking-wider shadow-lg hover:scale-[1.01] active:scale-95 transition-all cursor-pointer"
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-xs uppercase tracking-wider shadow-[0_4px_25px_rgba(198,168,124,0.3)] hover:scale-[1.01] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
               >
-                Return to Collections
+                <i className="ri-compass-3-line text-sm" />
+                <span>Explore Further Collections</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="w-full py-2.5 rounded-xl border border-[#262019] text-[#8a8278] hover:text-white text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <i className="ri-printer-line text-xs" />
+                <span>Print Atelier Receipt</span>
               </button>
             </div>
+
           </div>
         </div>
       )}
