@@ -1,6 +1,6 @@
 <p align="center">
   <img
-    src="YOUR_BANNER_IMAGE"
+    src="https://ik.imagekit.io/Rishi749/VASTRA_LOOM/Github/bannner%20vastra.png"
     alt="VASTRA LOOM Banner"
     width="100%"
   />
@@ -132,34 +132,18 @@ The seller experience is centered around a dedicated **Atelier Studio**, providi
 
 # 💳 Payment Workflow
 
-Razorpay is integrated into the checkout lifecycle with server-side payment verification.
+Razorpay is integrated into the checkout lifecycle with secure server-side payment verification.
 
-```text
-Product / Variant
-       │
-       ▼
- Shopping Cart
-       │
-       ▼
-Create Razorpay Order
-       │
-       ▼
-Razorpay Checkout
-       │
-       ▼
-Payment Completed
-       │
-       ▼
-Server-side Verification
-       │
-       ▼
-HMAC SHA-256 Validation
-       │
-       ▼
-Cart Cleared
-       │
-       ▼
-Paid Order
+<p align="center">
+  <img 
+    src="https://ik.imagekit.io/Rishi749/VASTRA_LOOM/Github/Payment%20Flow.png" 
+    alt="Razorpay Payment Workflow"
+    width="100%"
+  />
+</p>
+
+> **Payment Flow:**  
+> The customer selects a product or variant and proceeds through the shopping cart to Razorpay Checkout. After payment completion, the server verifies the Razorpay payment signature using HMAC SHA-256 before clearing the cart and confirming the paid order.
 ```
 
 The backend verifies the Razorpay payment signature using **HMAC SHA-256** before completing the payment workflow.
@@ -226,105 +210,20 @@ Authentication includes:
 
 ---
 
-# 🎨 Design Identity
-
-VASTRA LOOM follows a luxury fashion-oriented visual system designed around premium typography, restrained colors, and immersive product presentation.
-
-### Visual Modes
-
-- **Noir Sévère** — primary dark luxury experience
-- **Ivory Atelier** — light editorial experience
-- **Imperial Emerald** — refined accent system
-
-### Design System
-
-- Geist Variable typography
-- Remix Icon
-- Responsive layouts
-- High-resolution product imagery
-- 4K-oriented visual presentation
-- Motion-driven interactions
-- Luxury editorial styling
-
----
-
 # 🏗️ System Architecture
-
-VASTRA LOOM follows a unified **monolithic architecture** where the React application, Express backend, REST APIs, and production static assets operate together.
+  
+### Architecture Flow
 
 <p align="center">
-  <img
-    src="YOUR_ARCHITECTURE_IMAGE"
-    alt="VASTRA LOOM System Architecture"
+  <img 
+    src="https://ik.imagekit.io/Rishi749/VASTRA_LOOM/Github/Architecture.png" 
+    alt="Project Architecture Flow"
     width="100%"
   />
 </p>
 
-### Architecture Flow
-
-```text
-                    Client Browser
-                          │
-                          ▼
-                       React SPA
-                          │
-                          ▼
-                Vercel / Render Layer
-                          │
-                          ▼
-                   Express 5 Server
-                          │
-          ┌───────────────┼────────────────┐
-          ▼               ▼                ▼
-      REST APIs       Static Assets    Business Logic
-          │               │                │
-          └───────────────┼────────────────┘
-                          │
-          ┌───────────────┼────────────────────┐
-          ▼               ▼                    ▼
-      MongoDB          ImageKit             Razorpay
-       Atlas             CDN                 Payments
-```
-
-### Why Monolithic?
-
-VASTRA LOOM intentionally keeps the frontend and backend within a unified application boundary.
-
-This provides:
-
-- Single-domain deployment
-- Minimal CORS complexity
-- Centralized authentication
-- Shared application lifecycle
-- Simple deployment architecture
-- Express-powered SPA fallback
-- Direct serving of the built React application
-
-The project includes `sync_frontend.js`, which builds the Vite frontend and synchronizes the generated distribution into `Backend/public/`.
-
----
-
-# 🖼️ Media Architecture
-
-VASTRA LOOM uses **ImageKit** for cloud-based product media storage, optimization, transformations, and CDN delivery.
-
-```text
-Product Image
-      │
-      ▼
-Multer Memory Storage
-      │
-      ▼
-Express Backend
-      │
-      ▼
-ImageKit
-      │
-      ▼
-Optimized CDN Asset
-      │
-      ▼
-React Product Interface
+> **Architecture Overview:**  
+> The application follows a modern full-stack architecture where the React SPA communicates with the Express 5 backend through REST APIs. The backend handles business logic, static assets, database operations, image delivery through ImageKit CDN, and payment processing through Razorpay. MongoDB Atlas serves as the primary database.
 ```
 
 Product media is uploaded through the backend using memory-based file handling and synchronized with the `VASTRA_LOOM` ImageKit folder.
