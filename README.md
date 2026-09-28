@@ -162,40 +162,97 @@ The backend verifies the Razorpay payment signature using **HMAC SHA-256** befor
 <tr>
 <td width="50%" valign="top">
 
-# 🔐 Authentication
+<table>
+<tr>
 
-VASTRA LOOM supports secure local authentication and social OAuth login.
+<td width="50%" valign="top">
 
-| Feature | Implementation |
-|---|---|
-| 👥 Roles | Buyer / Seller |
-| 🔐 Authentication | JWT-based |
-| 🍪 Session | HttpOnly Cookies |
-| 🔑 Password Security | bcrypt |
-| 🌐 OAuth | Google & GitHub |
-| 🛡️ Route Protection | Protected routes |
-| 🔄 Session Hydration | `/api/auth/me` |
+<h3>🔐 Authentication</h3>
+
+<p>
+Secure local authentication with role-based access and social OAuth login.
+</p>
+
+<table>
+<tr>
+<th>Feature</th>
+<th>Implementation</th>
+</tr>
+<tr>
+<td>👥 Roles</td>
+<td>Buyer / Seller</td>
+</tr>
+<tr>
+<td>🔐 Auth</td>
+<td>JWT-based</td>
+</tr>
+<tr>
+<td>🍪 Session</td>
+<td>HttpOnly Cookies</td>
+</tr>
+<tr>
+<td>🔑 Passwords</td>
+<td>bcrypt</td>
+</tr>
+<tr>
+<td>🌐 OAuth</td>
+<td>Google · GitHub</td>
+</tr>
+<tr>
+<td>🛡️ Protection</td>
+<td>Protected Routes</td>
+</tr>
+</table>
 
 </td>
 
 <td width="50%" valign="top">
 
-# 🛠️ Technology Stack
+<h3>🛠️ Technology Stack</h3>
 
-| Layer | Technologies |
-|---|---|
-| 🎨 **Frontend** | React 19, Vite, Tailwind CSS, Redux Toolkit |
-| ⚙️ **Backend** | Node.js, Express 5 |
-| 🗄️ **Database** | MongoDB Atlas, Mongoose |
-| 🔐 **Authentication** | JWT, HttpOnly Cookies, bcrypt, Google & GitHub OAuth |
-| 💳 **Payments** | Razorpay |
-| 🖼️ **Media** | ImageKit, Multer |
-| 🚀 **Deployment** | Vercel, Render |
+<p>
+Core technologies powering the VASTRA LOOM platform.
+</p>
 
-</td>
+<table>
+<tr>
+<th>Layer</th>
+<th>Technologies</th>
+</tr>
+<tr>
+<td>🎨 Frontend</td>
+<td>React 19 · Vite · Tailwind CSS · Redux Toolkit</td>
+</tr>
+<tr>
+<td>⚙️ Backend</td>
+<td>Node.js · Express 5</td>
+</tr>
+<tr>
+<td>🗄️ Database</td>
+<td>MongoDB Atlas · Mongoose</td>
+</tr>
+<tr>
+<td>🔐 Auth</td>
+<td>JWT · OAuth · bcrypt</td>
+</tr>
+<tr>
+<td>💳 Payments</td>
+<td>Razorpay</td>
+</tr>
+<tr>
+<td>🖼️ Media</td>
+<td>ImageKit · Multer</td>
+</tr>
+<tr>
+<td>🚀 Deployment</td>
+<td>Vercel · Render</td>
 </tr>
 </table>
 
+</td>
+
+</tr>
+</table>
 
 # 🏗️ System Architecture
   
