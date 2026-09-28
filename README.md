@@ -158,6 +158,10 @@ The backend verifies the Razorpay payment signature using **HMAC SHA-256** befor
 
 ---
 
+<table>
+<tr>
+<td width="50%" valign="top">
+
 # 🔐 Authentication
 
 VASTRA LOOM supports secure local authentication and social OAuth login.
@@ -165,26 +169,32 @@ VASTRA LOOM supports secure local authentication and social OAuth login.
 | Feature | Implementation |
 |---|---|
 | 👥 Roles | Buyer / Seller |
-| 🔐 Authentication | JWT-based authentication |
-| 🍪 Session Storage | HttpOnly cookies |
+| 🔐 Authentication | JWT-based |
+| 🍪 Session | HttpOnly Cookies |
 | 🔑 Password Security | bcrypt |
 | 🌐 OAuth | Google & GitHub |
-| 🛡️ Route Protection | Protected user & seller routes |
+| 🛡️ Route Protection | Protected routes |
 | 🔄 Session Hydration | `/api/auth/me` |
 
-Authentication supports both traditional credentials and OAuth providers, with the authenticated session maintained through a signed JWT stored in an HttpOnly cookie.
+</td>
+
+<td width="50%" valign="top">
 
 # 🛠️ Technology Stack
 
-| Layer                 | Technologies                                         |
-| --------------------- | ---------------------------------------------------- |
-| 🎨 **Frontend**       | React 19, Vite, Tailwind CSS, Redux Toolkit          |
-| ⚙️ **Backend**        | Node.js, Express 5                                   |
-| 🗄️ **Database**      | MongoDB Atlas, Mongoose                              |
+| Layer | Technologies |
+|---|---|
+| 🎨 **Frontend** | React 19, Vite, Tailwind CSS, Redux Toolkit |
+| ⚙️ **Backend** | Node.js, Express 5 |
+| 🗄️ **Database** | MongoDB Atlas, Mongoose |
 | 🔐 **Authentication** | JWT, HttpOnly Cookies, bcrypt, Google & GitHub OAuth |
-| 💳 **Payments**       | Razorpay                                             |
-| 🖼️ **Media**         | ImageKit, Multer                                     |
-| 🚀 **Deployment**     | Vercel, Render                                       |
+| 💳 **Payments** | Razorpay |
+| 🖼️ **Media** | ImageKit, Multer |
+| 🚀 **Deployment** | Vercel, Render |
+
+</td>
+</tr>
+</table>
 
 
 # 🏗️ System Architecture
