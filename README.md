@@ -51,21 +51,55 @@ VASTRA LOOM combines the visual language of a luxury fashion house with the engi
 
 # ✨ Features
 
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### 🛍️ Shopping & Products
+
 - 👑 Luxury-focused Indian menswear storefront
 - 🛍️ Dynamic product catalog and discovery
 - 🔎 Debounced product search
 - 🎨 Real-time bespoke product variants
 - 📦 Variant-level inventory management
 - 💰 Dynamic pricing and discount management
+
+</td>
+<td width="50%" valign="top">
+
+### 🔐 Authentication & Security
+
 - 👥 Buyer & Seller role-based access
 - 🔐 JWT authentication with HttpOnly cookies
 - 🌐 Google & GitHub OAuth
-- 🖼️ ImageKit-powered media storage and optimization
+- 🛡️ Secure server-side payment verification
+
+</td>
+</tr>
+
+<tr>
+<td width="50%" valign="top">
+
+### 💳 Commerce & Media
+
 - 💳 Razorpay checkout integration
 - 🛒 Persistent shopping cart
-- 📱 Responsive interface
+- 🖼️ ImageKit-powered media storage
+- ⚡ Image optimization & CDN delivery
+
+</td>
+<td width="50%" valign="top">
+
+### ⚡ Performance & Deployment
+
+- 📱 Fully responsive interface
 - ⚡ Unified monolithic architecture
 - 🚀 Vercel / Render deployment support
+- 🔄 Optimized product discovery
+
+</td>
+</tr>
+</table>
 
 ---
 
@@ -86,32 +120,9 @@ VASTRA LOOM is designed as a premium digital atelier rather than a conventional 
 
 # 🎨 Bespoke Variant Engine
 
-The core shopping experience is built around a flexible **variant engine**.
+VASTRA LOOM supports configurable product variants, allowing each product edition to maintain independent **attributes, pricing, discounts, inventory, and image galleries**.
 
-A product can contain multiple bespoke editions, with each variant maintaining its own:
-
-- Attributes
-- Price
-- Discount
-- Original MRP
-- Stock
-- Image gallery
-
-When a customer switches between variants, the interface dynamically updates the relevant product information without requiring a page reload.
-
-```text
-                    Master Product
-                          │
-             ┌────────────┼────────────┐
-             ▼            ▼            ▼
-         Variant A    Variant B    Variant C
-             │            │            │
-       ┌─────┼─────┐ ┌────┼────┐ ┌────┼────┐
-       ▼     ▼     ▼ ▼    ▼    ▼ ▼    ▼    ▼
-     Price Stock Images  Price Stock Images
-```
-
-> **One product can become multiple configurable editions while maintaining independent inventory, pricing, and media.**
+Customers can switch between variants dynamically without reloading the product page, while sellers can create and manage variants through the **Atelier Studio**.
 
 ---
 
@@ -150,63 +161,32 @@ The backend verifies the Razorpay payment signature using **HMAC SHA-256** befor
 
 # 🔐 Authentication
 
-VASTRA LOOM supports local authentication as well as social login.
+VASTRA LOOM supports secure local authentication and social OAuth login.
 
-```text
-                    Authentication
-                          │
-             ┌────────────┴────────────┐
-             ▼                         ▼
-       Local Authentication       OAuth Authentication
-             │                  ┌────────┴────────┐
-             │                  ▼                 ▼
-             │               Google            GitHub
-             │                  │                 │
-             └──────────────────┴─────────────────┘
-                                │
-                                ▼
-                           User Account
-                                │
-                                ▼
-                         Signed JWT Cookie
-                                │
-                                ▼
-                       Protected Application
-```
+| Feature | Implementation |
+|---|---|
+| 👥 Roles | Buyer / Seller |
+| 🔐 Authentication | JWT-based authentication |
+| 🍪 Session Storage | HttpOnly cookies |
+| 🔑 Password Security | bcrypt |
+| 🌐 OAuth | Google & GitHub |
+| 🛡️ Route Protection | Protected user & seller routes |
+| 🔄 Session Hydration | `/api/auth/me` |
 
-Authentication includes:
-
-- Buyer / Seller roles
-- Password hashing using bcrypt
-- JWT-based authentication
-- HttpOnly cookie storage
-- Protected user and seller routes
-- Google OAuth
-- GitHub OAuth
-- `/api/auth/me` session hydration
-
----
+Authentication supports both traditional credentials and OAuth providers, with the authenticated session maintained through a signed JWT stored in an HttpOnly cookie.
 
 # 🛠️ Technology Stack
 
-| Category | Technologies |
-|---|---|
-| 🎨 **Frontend** | React 19, Vite |
-| 🎨 **Styling** | Tailwind CSS v4, Vanilla CSS |
-| 🧭 **Routing** | React Router v7 |
-| 🧠 **State Management** | Redux Toolkit |
-| ✨ **Animations** | Motion |
-| 🔣 **Icons** | Remix Icon |
-| ⚙️ **Backend** | Node.js 22+, Express 5.2.1 |
-| 🗄️ **Database** | MongoDB Atlas, Mongoose 9 |
-| 🔐 **Authentication** | JWT, HttpOnly Cookies, bcryptjs |
-| 🌐 **OAuth** | Passport, Google, GitHub |
-| 🖼️ **Media** | ImageKit |
-| 💳 **Payments** | Razorpay |
-| 📤 **File Uploads** | Multer |
-| 🚀 **Deployment** | Vercel, Render |
+| Layer                 | Technologies                                         |
+| --------------------- | ---------------------------------------------------- |
+| 🎨 **Frontend**       | React 19, Vite, Tailwind CSS, Redux Toolkit          |
+| ⚙️ **Backend**        | Node.js, Express 5                                   |
+| 🗄️ **Database**      | MongoDB Atlas, Mongoose                              |
+| 🔐 **Authentication** | JWT, HttpOnly Cookies, bcrypt, Google & GitHub OAuth |
+| 💳 **Payments**       | Razorpay                                             |
+| 🖼️ **Media**         | ImageKit, Multer                                     |
+| 🚀 **Deployment**     | Vercel, Render                                       |
 
----
 
 # 🏗️ System Architecture
   
@@ -380,39 +360,6 @@ or the next available port.
 
 ---
 
-# 🔄 Frontend Synchronization
-
-VASTRA LOOM supports a unified production-style workflow where the React frontend is built and synchronized into the Express backend.
-
-From the project root:
-
-```bash
-node sync_frontend.js
-```
-
-The synchronization process:
-
-```text
-Frontend
-   │
-   ▼
-Vite Build
-   │
-   ▼
-Frontend/dist
-   │
-   ▼
-sync_frontend.js
-   │
-   ▼
-Backend/public
-   │
-   ▼
-Express Server
-```
-
-This allows Express to serve the compiled React application together with the backend APIs.
-
 ---
 
 # 🌐 API Overview
@@ -426,72 +373,35 @@ VASTRA LOOM exposes REST APIs for authentication, products, cart management, and
 | 🛒 Cart | `/api/cart` | Cart operations |
 | 💳 Payment | `/api/payment` | Razorpay order creation and verification |
 
-### Authentication
+# 🌐 API Overview
 
-```text
-POST   /api/auth/register
-POST   /api/auth/login
-POST   /api/auth/logout
-GET    /api/auth/me
-GET    /api/auth/google
-GET    /api/auth/github
-```
+VASTRA LOOM exposes RESTful APIs for authentication, product management, cart operations, and Razorpay payments.
 
-### Products
-
-```text
-GET    /api/products
-GET    /api/products/:id
-GET    /api/products/seller
-POST   /api/products
-PATCH  /api/products/:id/discount
-PATCH  /api/products/:id/stock
-DELETE /api/products/:id
-POST   /api/products/:id/variants
-PATCH  /api/products/:id/variants/:variantId/stock
-```
-
-### Cart
-
-```text
-GET    /api/cart
-POST   /api/cart
-PATCH  /api/cart/:itemId
-DELETE /api/cart/:itemId
-```
-
-### Payments
-
-```text
-POST   /api/payment/create-order
-POST   /api/payment/verify
-```
+| Module           |  Method  | Endpoint                                      | Purpose                |
+| ---------------- | :------: | --------------------------------------------- | ---------------------- |
+| 🔐 **Auth**      |  `POST`  | `/api/auth/register`                          | Register a new user    |
+|                  |  `POST`  | `/api/auth/login`                             | Authenticate user      |
+|                  |  `POST`  | `/api/auth/logout`                            | End user session       |
+|                  |   `GET`  | `/api/auth/me`                                | Get authenticated user |
+|                  |   `GET`  | `/api/auth/google`                            | Google OAuth           |
+|                  |   `GET`  | `/api/auth/github`                            | GitHub OAuth           |
+| 🛍️ **Products** |   `GET`  | `/api/products`                               | Get products           |
+|                  |   `GET`  | `/api/products/:id`                           | Get product details    |
+|                  |   `GET`  | `/api/products/seller`                        | Get seller products    |
+|                  |  `POST`  | `/api/products`                               | Create product         |
+|                  |  `PATCH` | `/api/products/:id/discount`                  | Update discount        |
+|                  |  `PATCH` | `/api/products/:id/stock`                     | Update stock           |
+|                  | `DELETE` | `/api/products/:id`                           | Delete product         |
+|                  |  `POST`  | `/api/products/:id/variants`                  | Create variant         |
+|                  |  `PATCH` | `/api/products/:id/variants/:variantId/stock` | Update variant stock   |
+| 🛒 **Cart**      |   `GET`  | `/api/cart`                                   | Get cart               |
+|                  |  `POST`  | `/api/cart`                                   | Add to cart            |
+|                  |  `PATCH` | `/api/cart/:itemId`                           | Update cart item       |
+|                  | `DELETE` | `/api/cart/:itemId`                           | Remove cart item       |
+| 💳 **Payment**   |  `POST`  | `/api/payment/create-order`                   | Create Razorpay order  |
+|                  |  `POST`  | `/api/payment/verify`                         | Verify payment         |
 
 ---
-
-# 🗄️ Data Model
-
-VASTRA LOOM uses MongoDB with Mongoose for its core application data.
-
-```text
-                    MongoDB Atlas
-                         │
-          ┌──────────────┼──────────────┐
-          ▼              ▼              ▼
-        User          Product          Cart
-          │              │              │
-          │              ├── Variants    ├── Items
-          │              ├── Images      │
-          │              ├── Pricing     └── Product
-          │              ├── Stock
-          │              └── Seller
-          │
-          ├── Buyer / Seller
-          ├── Email
-          ├── Password
-          ├── Google ID
-          └── GitHub ID
-```
 
 ### Core Models
 
@@ -500,73 +410,6 @@ VASTRA LOOM uses MongoDB with Mongoose for its core application data.
 | 👤 **User** | Authentication, identity, role, and OAuth information |
 | 👗 **Product** | Product information, pricing, stock, images, seller, and variants |
 | 🛒 **Cart** | User shopping cart and selected product variants |
-
----
-
-# 🖼️ ImageKit Integration
-
-Product media is handled through ImageKit.
-
-The backend uses:
-
-- `@imagekit/nodejs`
-- Multer `memoryStorage`
-- Buffer-based uploads
-- Dedicated `VASTRA_LOOM` ImageKit folder
-- Dynamic image transformations
-- Automatic format optimization
-
-Example optimized asset:
-
-```text
-https://ik.imagekit.io/Rishi749/VASTRA_LOOM/file.jpg?tr=w-1200,q-85,f-auto
-```
-
-This allows the application to request optimized product imagery without maintaining multiple manually generated image versions.
-
----
-
-# ☁️ Deployment
-
-VASTRA LOOM supports both **Vercel** and **Render** deployment workflows.
-
-## Vercel
-
-The backend includes a serverless entry point:
-
-```text
-Backend/api/index.js
-```
-
-with the required Vercel configuration.
-
-Recommended configuration:
-
-```text
-Root Directory:
-Backend
-```
-
-Vercel can then serve the Express application together with the synchronized frontend.
-
----
-
-## Render
-
-VASTRA LOOM can also run as a Node.js web service on Render.
-
-```text
-Root Directory:
-Backend
-
-Build Command:
-npm install
-
-Start Command:
-node server.js
-```
-
-The required production environment variables should be configured through the deployment platform rather than committed to the repository.
 
 ---
 
@@ -702,7 +545,7 @@ See the `LICENSE` file for more information.
 
 <p align="center">
   <img
-    src="YOUR_FOOTER_IMAGE"
+    src="https://ik.imagekit.io/Rishi749/VASTRA_LOOM/Github/Footer.png"
     alt="VASTRA LOOM Footer"
     width="100%"
   />
