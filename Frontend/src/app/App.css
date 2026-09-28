@@ -2,54 +2,183 @@
 @import "@fontsource-variable/geist";
 
 /* ════════════════════════════════════════════════════════
-   HAUTE COUTURE LUXURY SCROLLBAR & SMOOTH SCROLL SYSTEM
-   Seamlessly blends with obsidian #080806 & imperial gold #C6A87C
+   HAUTE COUTURE LUXURY DESIGN SYSTEM TOKENS (3 THEMES)
+   1. Noir Sévère (Obsidian & Antique Gold) - Default
+   2. Ivory Atelier (Silk Alabaster & Champagne Gold) - White
+   3. Imperial Emerald (Malachite Green & Burnished Gold) - Heritage
 ════════════════════════════════════════════════════════ */
 
-html {
-  scroll-behavior: smooth;
+:root,
+[data-theme="noir"] {
+  --bg-canvas: #080806;
+  --bg-card: #100f0d;
+  --bg-card-hover: #171511;
+  --bg-card-subtle: #14120e;
+  --bg-elevated: #1a1713;
+  --bg-input: #0c0b09;
+  --bg-header: rgba(8, 8, 6, 0.92);
+  --bg-modal: #100f0d;
+  --bg-modal-backdrop: rgba(0, 0, 0, 0.88);
+
+  --border-subtle: #1c1914;
+  --border-card: #26211a;
+  --border-card-hover: rgba(198, 168, 124, 0.45);
+  --border-active: #C6A87C;
+
+  --text-primary: #ffffff;
+  --text-secondary: #d5cebf;
+  --text-muted: #8a8278;
+  --text-dim: #5a5247;
+  --text-on-accent: #0A0806;
+
+  --accent-gold: #C6A87C;
+  --accent-gold-light: #E0CA9E;
+  --accent-gold-dark: #9e7d47;
+  --accent-gradient: linear-gradient(135deg, #C6A87C 0%, #E2CFAB 50%, #B89768 100%);
+  --accent-glow: rgba(198, 168, 124, 0.25);
+
+  --scrollbar-track: #080806;
+  --scrollbar-thumb: #221e18;
   color-scheme: dark;
 }
 
-/* Custom modern scrollbar for Chrome, Safari, Edge, Opera */
+[data-theme="ivory"] {
+  --bg-canvas: #FBF9F6;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F8F5F0;
+  --bg-card-subtle: #F5EFE6;
+  --bg-elevated: #EDE5D8;
+  --bg-input: #FFFFFF;
+  --bg-header: rgba(251, 249, 246, 0.95);
+  --bg-modal: #FFFFFF;
+  --bg-modal-backdrop: rgba(26, 22, 18, 0.65);
+
+  --border-subtle: #ECE4D8;
+  --border-card: #DFD5C4;
+  --border-card-hover: #A8864E;
+  --border-active: #A8864E;
+
+  --text-primary: #161310;
+  --text-secondary: #4A4237;
+  --text-muted: #7A7062;
+  --text-dim: #A69B8C;
+  --text-on-accent: #0C0A07;
+
+  --accent-gold: #9E7D47;
+  --accent-gold-light: #BFA06C;
+  --accent-gold-dark: #7A5E33;
+  --accent-gradient: linear-gradient(135deg, #B59359 0%, #D4B67F 50%, #A8854D 100%);
+  --accent-glow: rgba(158, 125, 71, 0.16);
+
+  --scrollbar-track: #FBF9F6;
+  --scrollbar-thumb: #D8CEBE;
+  color-scheme: light;
+}
+
+[data-theme="emerald"] {
+  --bg-canvas: #04130E;
+  --bg-card: #092017;
+  --bg-card-hover: #0E2A1F;
+  --bg-card-subtle: #0C241B;
+  --bg-elevated: #133527;
+  --bg-input: #071912;
+  --bg-header: rgba(4, 19, 14, 0.92);
+  --bg-modal: #092017;
+  --bg-modal-backdrop: rgba(2, 10, 7, 0.88);
+
+  --border-subtle: #12382A;
+  --border-card: #1A4736;
+  --border-card-hover: rgba(212, 175, 55, 0.5);
+  --border-active: #D4AF37;
+
+  --text-primary: #F4F8F6;
+  --text-secondary: #CBE0D5;
+  --text-muted: #7EA693;
+  --text-dim: #527565;
+  --text-on-accent: #03100B;
+
+  --accent-gold: #D4AF37;
+  --accent-gold-light: #F0D577;
+  --accent-gold-dark: #AA8A24;
+  --accent-gradient: linear-gradient(135deg, #D4AF37 0%, #F5DE88 50%, #B89324 100%);
+  --accent-glow: rgba(212, 175, 55, 0.3);
+
+  --scrollbar-track: #04130E;
+  --scrollbar-thumb: #174232;
+  color-scheme: dark;
+}
+
+/* ════════════════════════════════════════════════════════
+   GLOBAL APPLICATION STYLES
+════════════════════════════════════════════════════════ */
+
+html, body {
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-x: hidden;
+}
+
+/* Custom scrollbars matching theme */
 ::-webkit-scrollbar {
   width: 7px;
   height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #080806;
+  background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #221e18;
+  background: var(--scrollbar-thumb);
   border-radius: 9999px;
-  border: 1px solid rgba(198, 168, 124, 0.15);
+  border: 1px solid var(--border-subtle);
   transition: all 0.25s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #C6A87C;
-  box-shadow: 0 0 10px rgba(198, 168, 124, 0.4);
+  background: var(--accent-gold);
+  box-shadow: 0 0 10px var(--accent-glow);
 }
 
-/* Custom scrollbar for Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #2b251d #080806;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
-/* Utility to hide scrollbars while enabling scroll */
 .no-scrollbar::-webkit-scrollbar {
   display: none !important;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
 }
 
-/* Luxury text selection */
 ::selection {
-  background-color: rgba(198, 168, 124, 0.35);
-  color: #fffaf0;
+  background-color: var(--accent-glow);
+  color: var(--text-primary);
+}
+
+/* Luxury button and gradient utilities */
+.btn-gold,
+.bg-accent-gradient,
+[class*="accent-gradient"] {
+  background: var(--accent-gradient) !important;
+  color: var(--text-on-accent) !important;
+}
+
+.btn-gold:hover,
+.bg-accent-gradient:hover,
+[class*="accent-gradient"]:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 4px 20px var(--accent-glow);
+}
+
+/* Variant Swatch Luxury Effects */
+.variant-card-active {
+  border-color: var(--accent-gold) !important;
+  box-shadow: 0 0 16px var(--accent-glow);
+  background-color: var(--bg-card-subtle) !important;
 }

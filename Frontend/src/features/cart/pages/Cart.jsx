@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import 'remixicon/fonts/remixicon.css';
 import Navbar from '../../../components/Navbar';
+import SEO from '../../../components/SEO';
 import { useCart } from '../hook/useCart';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { getImageUrl } from '../../../utils/image';
@@ -291,38 +292,67 @@ const Cart = () => {
   // ── Guest State ──
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#080806] font-sans text-gray-100 flex flex-col">
+      <div
+        className="min-h-screen font-sans flex flex-col transition-colors duration-500"
+        style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-primary)' }}
+      >
+        <SEO
+          title="Shopping Bag - Authentication Required | VASTRA LOOM"
+          description="Sign in to access your bespoke haute couture creations and private handloom reservations."
+        />
         <Navbar subtitle="Shopping Bag" />
         <div className="flex-1 max-w-4xl w-full mx-auto px-4 py-16 flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 rounded-2xl bg-[#13110d] border border-[#2a241b] flex items-center justify-center text-[#C6A87C] mb-6 shadow-2xl">
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-2xl transition-all"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--border-card)',
+              borderWidth: '1px',
+              color: 'var(--accent-gold)',
+            }}
+          >
             <i className="ri-vip-crown-2-line text-3xl" />
           </div>
-          <span className="text-[11px] uppercase tracking-[0.25em] font-semibold text-[#C6A87C]">
+          <span
+            className="text-[11px] uppercase tracking-[0.25em] font-semibold"
+            style={{ color: 'var(--accent-gold)' }}
+          >
             Patron Authentication Required
           </span>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mt-2 mb-3 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-bold mt-2 mb-3 tracking-tight">
             Sign In to Access Your Couture Bag
           </h2>
-          <p className="text-xs sm:text-sm text-[#8a8278] max-w-md mb-8 leading-relaxed">
+          <p
+            className="text-xs sm:text-sm max-w-md mb-8 leading-relaxed"
+            style={{ color: 'var(--text-secondary)' }}
+          >
             Your reserved handloom creations and bespoke atelier selections are securely linked to your patron profile.
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-xs">
             <Link
               to="/login"
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-xs uppercase tracking-wider text-center shadow-lg hover:opacity-95 transition-opacity"
+              className="w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider text-center shadow-lg transition-all hover:scale-[1.02] active:scale-98"
+              style={{ background: 'var(--accent-gradient)', color: 'var(--text-on-accent)' }}
             >
               Sign In to Atelier
             </Link>
             <Link
               to="/register"
-              className="w-full py-3 rounded-xl bg-[#12100d] border border-[#26211a] text-gray-200 hover:text-white hover:border-[#C6A87C]/50 font-semibold text-xs uppercase tracking-wider text-center transition-all"
+              className="w-full py-3.5 rounded-xl font-semibold text-xs uppercase tracking-wider text-center transition-all hover:border-[var(--accent-gold)]"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border-card)',
+                borderWidth: '1px',
+                color: 'var(--text-primary)',
+              }}
             >
               Create Account
             </Link>
           </div>
           <Link
             to="/"
-            className="mt-8 text-xs text-[#787167] hover:text-[#C6A87C] transition-colors flex items-center gap-1 uppercase tracking-wider font-medium"
+            className="mt-8 text-xs transition-colors flex items-center gap-1 uppercase tracking-wider font-medium hover:text-[var(--accent-gold)]"
+            style={{ color: 'var(--text-muted)' }}
           >
             <i className="ri-arrow-left-line text-sm" />
             <span>Continue Browsing Catalog</span>
@@ -333,19 +363,40 @@ const Cart = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#080806] font-sans text-gray-100 flex flex-col selection:bg-[#C6A87C]/30 selection:text-[#fff8e7]">
+    <div
+      className="min-h-screen font-sans flex flex-col transition-colors duration-500"
+      style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-primary)' }}
+    >
+      <SEO
+        title={`Your Shopping Bag (${totalItems} ${totalItems === 1 ? 'Piece' : 'Pieces'}) | VASTRA LOOM`}
+        description="Review your reserved handloom creations, bespoke atelier selections, and proceed to insured white-glove checkout."
+      />
+
       {/* ── Fixed Luxury Header ── */}
       <Navbar subtitle="Shopping Bag" />
 
       {/* ── Toast Notifications ── */}
       {feedbackToast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#14120e] border border-[#C6A87C]/60 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="w-5 h-5 rounded-full bg-[#C6A87C] text-[#080806] flex items-center justify-center font-bold text-xs">
+        <div
+          className="fixed bottom-6 right-6 z-50 text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300 backdrop-blur-md"
+          style={{
+            backgroundColor: 'var(--bg-card)',
+            borderColor: 'var(--accent-gold)',
+            borderWidth: '1px',
+            color: 'var(--text-primary)',
+          }}
+        >
+          <div
+            className="w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs"
+            style={{ backgroundColor: 'var(--accent-gold)', color: 'var(--text-on-accent)' }}
+          >
             <i className="ri-check-line" />
           </div>
           <div>
-            <span className="font-semibold text-white block">{feedbackToast}</span>
-            <span className="text-[10px] text-[#C6A87C]">Shopping Bag Synchronized</span>
+            <span className="font-semibold block">{feedbackToast}</span>
+            <span className="text-[10px]" style={{ color: 'var(--accent-gold)' }}>
+              Shopping Bag Synchronized
+            </span>
           </div>
         </div>
       )}
@@ -354,16 +405,23 @@ const Cart = () => {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         
         {/* Subtle Top Row: Back to Catalog & Bag Status */}
-        <div className="flex items-center justify-between pb-6 border-b border-[#1c1914]">
+        <div
+          className="flex items-center justify-between pb-6 border-b"
+          style={{ borderColor: 'var(--border-subtle)' }}
+        >
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-[#8a8278] hover:text-[#C6A87C] transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wider transition-colors hover:text-[var(--accent-gold)]"
+            style={{ color: 'var(--text-secondary)' }}
           >
             <i className="ri-arrow-left-line text-sm" />
             <span>Continue Curating</span>
           </Link>
 
-          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-[#C6A87C] font-semibold">
+          <div
+            className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] font-semibold"
+            style={{ color: 'var(--accent-gold)' }}
+          >
             <i className="ri-vip-crown-fill text-xs" />
             <span>Bespoke Atelier Reservoir</span>
           </div>
@@ -372,15 +430,21 @@ const Cart = () => {
         {/* ── Page Header ── */}
         <div className="py-6 flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#C6A87C]">
+            <span
+              className="text-[10px] font-bold uppercase tracking-[0.25em]"
+              style={{ color: 'var(--accent-gold)' }}
+            >
               HAUTE COUTURE RESERVATION
             </span>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight mt-1">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-1">
               Your Shopping Bag
             </h1>
           </div>
           {items && items.length > 0 && (
-            <span className="text-xs text-[#8a8278] tracking-wider uppercase font-mono">
+            <span
+              className="text-xs tracking-wider uppercase font-mono"
+              style={{ color: 'var(--text-secondary)' }}
+            >
               {totalItems} {totalItems === 1 ? 'Piece Reserved' : 'Pieces Reserved'}
             </span>
           )}
@@ -388,22 +452,44 @@ const Cart = () => {
 
         {/* ── Empty Cart State ── */}
         {(!items || items.length === 0) ? (
-          <div className="py-16 sm:py-24 rounded-3xl bg-[#0d0c0a] border border-[#201c17] text-center p-8 flex flex-col items-center justify-center shadow-2xl">
-            <div className="w-16 h-16 rounded-2xl bg-[#14120e] border border-[#C6A87C]/30 flex items-center justify-center text-[#C6A87C] mb-5 shadow-lg">
+          <div
+            className="py-16 sm:py-24 rounded-3xl text-center p-8 flex flex-col items-center justify-center shadow-2xl transition-all"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--border-card)',
+              borderWidth: '1px',
+            }}
+          >
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 shadow-lg"
+              style={{
+                backgroundColor: 'var(--bg-card-subtle)',
+                borderColor: 'var(--accent-gold)',
+                borderWidth: '1px',
+                color: 'var(--accent-gold)',
+              }}
+            >
               <i className="ri-shopping-bag-3-line text-3xl" />
             </div>
-            <span className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#C6A87C]">
+            <span
+              className="text-[10px] uppercase tracking-[0.25em] font-bold"
+              style={{ color: 'var(--accent-gold)' }}
+            >
               Atelier Reservoir Empty
             </span>
-            <h2 className="text-xl sm:text-2xl font-bold text-white mt-1 mb-2">
+            <h2 className="text-xl sm:text-2xl font-bold mt-1 mb-2">
               Your Shopping Bag is Currently Empty
             </h2>
-            <p className="text-xs sm:text-sm text-[#8a8278] max-w-md mx-auto leading-relaxed mb-8">
+            <p
+              className="text-xs sm:text-sm max-w-md mx-auto leading-relaxed mb-8"
+              style={{ color: 'var(--text-secondary)' }}
+            >
               Explore our master artisans' bespoke handloom sherwanis, achkans, and royal silhouettes tailored with timeless precision.
             </p>
             <Link
               to="/"
-              className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-xs uppercase tracking-wider shadow-[0_4px_25px_rgba(198,168,124,0.25)] hover:shadow-[0_6px_30px_rgba(198,168,124,0.4)] hover:scale-[1.01] active:scale-95 transition-all flex items-center gap-2"
+              className="px-8 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg hover:scale-[1.01] active:scale-95 transition-all flex items-center gap-2"
+              style={{ background: 'var(--accent-gradient)', color: 'var(--text-on-accent)' }}
             >
               <i className="ri-compass-3-line text-sm" />
               <span>Discover Haute Couture Catalog</span>
@@ -420,13 +506,29 @@ const Cart = () => {
               
               {/* Atelier Live Price Synchronization Alert Banner */}
               {items.some((it) => it.priceStatus === 'increased' || it.priceStatus === 'decreased') && (
-                <div className="p-3.5 rounded-xl bg-[#16120d] border border-[#C6A87C]/50 text-xs text-gray-200 flex items-start gap-2.5 shadow-lg animate-in fade-in duration-300">
-                  <i className="ri-information-fill text-[#C6A87C] text-base shrink-0 mt-0.5" />
+                <div
+                  className="p-3.5 rounded-xl text-xs flex items-start gap-2.5 shadow-lg animate-in fade-in duration-300"
+                  style={{
+                    backgroundColor: 'var(--bg-card)',
+                    borderColor: 'var(--accent-gold)',
+                    borderWidth: '1px',
+                  }}
+                >
+                  <i
+                    className="ri-information-fill text-base shrink-0 mt-0.5"
+                    style={{ color: 'var(--accent-gold)' }}
+                  />
                   <div>
-                    <span className="font-bold text-[#C6A87C] uppercase tracking-wider text-[11px] block">
+                    <span
+                      className="font-bold uppercase tracking-wider text-[11px] block"
+                      style={{ color: 'var(--accent-gold)' }}
+                    >
                       Live Atelier Price Synchronization
                     </span>
-                    <p className="text-[11px] text-gray-300 mt-0.5 leading-relaxed">
+                    <p
+                      className="text-[11px] mt-0.5 leading-relaxed"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
                       One or more pieces in your shopping bag had a price revision by their master artisans. Your subtotals and total reservation have been synchronized with the latest catalog rates.
                     </p>
                   </div>
@@ -441,16 +543,26 @@ const Cart = () => {
                 return (
                   <div
                     key={itemKey}
-                    className={`relative rounded-2xl bg-[#100f0d] border border-[#221e18] p-4 sm:p-5 transition-all hover:border-[#C6A87C]/40 shadow-xl ${
+                    className={`relative rounded-2xl p-4 sm:p-5 transition-all shadow-xl hover:border-[var(--accent-gold)] ${
                       isMutating ? 'opacity-60 pointer-events-none' : 'opacity-100'
                     }`}
+                    style={{
+                      backgroundColor: 'var(--bg-card)',
+                      borderColor: 'var(--border-card)',
+                      borderWidth: '1px',
+                    }}
                   >
                     <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 items-start">
                       
                       {/* 1. Garment Portrait Thumbnail */}
                       <Link
                         to={`/product/${item.product._id}`}
-                        className="relative aspect-[3/4] w-24 sm:w-28 rounded-xl bg-[#161410] border border-[#26211a] overflow-hidden shrink-0 group block"
+                        className="relative aspect-[3/4] w-24 sm:w-28 rounded-xl overflow-hidden shrink-0 group block shadow-md"
+                        style={{
+                          backgroundColor: 'var(--bg-card-subtle)',
+                          borderColor: 'var(--border-subtle)',
+                          borderWidth: '1px',
+                        }}
                       >
                         {imgUrl ? (
                           <img
@@ -459,14 +571,28 @@ const Cart = () => {
                             className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
                           />
                         ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center text-[#554e44] p-2 text-center">
-                            <i className="ri-vip-crown-2-line text-lg text-[#C6A87C]" />
-                            <span className="text-[9px] uppercase tracking-widest text-[#C6A87C] font-semibold mt-1">
+                          <div
+                            className="w-full h-full flex flex-col items-center justify-center p-2 text-center"
+                            style={{ color: 'var(--text-muted)' }}
+                          >
+                            <i className="ri-vip-crown-2-line text-lg" style={{ color: 'var(--accent-gold)' }} />
+                            <span
+                              className="text-[9px] uppercase tracking-widest font-semibold mt-1"
+                              style={{ color: 'var(--accent-gold)' }}
+                            >
                               VASTRA
                             </span>
                           </div>
                         )}
-                        <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur text-[8px] font-extrabold uppercase tracking-widest text-[#C6A87C] border border-[#C6A87C]/20">
+                        <span
+                          className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase tracking-widest backdrop-blur-md"
+                          style={{
+                            backgroundColor: 'rgba(0,0,0,0.7)',
+                            color: 'var(--accent-gold)',
+                            borderColor: 'var(--border-subtle)',
+                            borderWidth: '1px',
+                          }}
+                        >
                           BESPOKE
                         </span>
                       </Link>
@@ -476,11 +602,17 @@ const Cart = () => {
                         <div>
                           {/* Brand & Reference */}
                           <div className="flex items-center justify-between">
-                            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#C6A87C] flex items-center gap-1">
+                            <span
+                              className="text-[9px] font-bold uppercase tracking-[0.2em] flex items-center gap-1"
+                              style={{ color: 'var(--accent-gold)' }}
+                            >
                               <i className="ri-vip-crown-fill text-[9px]" />
                               HAUTE COUTURE BESPOKE
                             </span>
-                            <span className="text-[10px] text-[#6b645b] font-mono">
+                            <span
+                              className="text-[10px] font-mono"
+                              style={{ color: 'var(--text-muted)' }}
+                            >
                               Ref: {item.product._id?.slice(-8)}
                             </span>
                           </div>
@@ -488,7 +620,7 @@ const Cart = () => {
                           {/* Garment Title */}
                           <Link
                             to={`/product/${item.product._id}`}
-                            className="text-base sm:text-lg font-bold text-white hover:text-[#C6A87C] transition-colors leading-snug mt-0.5 block"
+                            className="text-base sm:text-lg font-bold hover:text-[var(--accent-gold)] transition-colors leading-snug mt-0.5 block"
                           >
                             {item.product.title}
                           </Link>
@@ -499,16 +631,30 @@ const Cart = () => {
                               Object.entries(item.attributes).map(([key, val]) => (
                                 <span
                                   key={key}
-                                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-[#161410] border border-[#2b251d] text-[10px] text-gray-200"
+                                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px]"
+                                  style={{
+                                    backgroundColor: 'var(--bg-card-subtle)',
+                                    borderColor: 'var(--border-subtle)',
+                                    borderWidth: '1px',
+                                    color: 'var(--text-secondary)',
+                                  }}
                                 >
-                                  <strong className="text-[#C6A87C] uppercase font-semibold">
+                                  <strong style={{ color: 'var(--accent-gold)' }} className="uppercase font-semibold">
                                     {key}:
                                   </strong>
                                   <span className="capitalize">{val}</span>
                                 </span>
                               ))
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-[#161410] border border-[#2b251d] text-[10px] text-[#C6A87C]">
+                              <span
+                                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px]"
+                                style={{
+                                  backgroundColor: 'var(--bg-card-subtle)',
+                                  borderColor: 'var(--border-subtle)',
+                                  borderWidth: '1px',
+                                  color: 'var(--accent-gold)',
+                                }}
+                              >
                                 Atelier Master Piece
                               </span>
                             )}
@@ -518,10 +664,13 @@ const Cart = () => {
                         {/* 3. Unit Price & Live Stock Status & Price Revisions */}
                         <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-xs text-[#7a7267] uppercase tracking-wider font-medium">
+                            <span
+                              className="text-xs uppercase tracking-wider font-medium"
+                              style={{ color: 'var(--text-muted)' }}
+                            >
                               Unit Price:
                             </span>
-                            <span className="text-xs font-mono font-semibold text-white">
+                            <span className="text-xs font-mono font-semibold">
                               {formatCurrency(item.unitPrice || item.price?.amount, item.currency || currency)}
                             </span>
 
@@ -554,35 +703,46 @@ const Cart = () => {
 
                           {/* Stock Status Indicator */}
                           {item.liveStock > 0 ? (
-                            <span className="text-[10px] uppercase tracking-wider font-semibold text-emerald-400 flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                            <span className="text-[10px] uppercase tracking-wider font-semibold text-emerald-500 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                               {item.liveStock <= 5
                                 ? `Only ${item.liveStock} left`
                                 : `${item.liveStock} in stock`}
                             </span>
                           ) : (
-                            <span className="text-[10px] uppercase tracking-wider font-semibold text-rose-400 flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                            <span className="text-[10px] uppercase tracking-wider font-semibold text-rose-500 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                               Out of Stock
                             </span>
                           )}
                         </div>
 
                         {/* 4. Controls Row: Quantity Stepper, Line Total, Trash Action */}
-                        <div className="flex items-center justify-between pt-2 border-t border-[#1d1a15]">
+                        <div
+                          className="flex items-center justify-between pt-2 border-t"
+                          style={{ borderColor: 'var(--border-subtle)' }}
+                        >
                           
                           {/* Quantity Stepper */}
-                          <div className="flex items-center border border-[#26211a] rounded-xl bg-[#0c0b09] overflow-hidden">
+                          <div
+                            className="flex items-center rounded-xl overflow-hidden shadow-inner"
+                            style={{
+                              backgroundColor: 'var(--bg-card-subtle)',
+                              borderColor: 'var(--border-card)',
+                              borderWidth: '1px',
+                            }}
+                          >
                             <button
                               type="button"
                               onClick={() => onDecrement(item)}
                               disabled={isMutating}
                               title="Decrease quantity"
-                              className="w-7 h-7 flex items-center justify-center text-[#C6A87C] hover:bg-[#1a1712] disabled:opacity-30 transition-colors cursor-pointer"
+                              className="w-7 h-7 flex items-center justify-center transition-colors cursor-pointer hover:bg-[var(--accent-gold)]/10 disabled:opacity-30"
+                              style={{ color: 'var(--accent-gold)' }}
                             >
                               <i className={item.quantity === 1 ? "ri-delete-bin-line text-xs text-red-400" : "ri-subtract-line text-xs"} />
                             </button>
-                            <span className="w-8 text-center text-xs font-mono font-bold text-white">
+                            <span className="w-8 text-center text-xs font-mono font-bold">
                               {item.quantity}
                             </span>
                             <button
@@ -590,7 +750,8 @@ const Cart = () => {
                               onClick={() => onIncrement(item)}
                               disabled={isMutating || (item.liveStock && item.quantity >= item.liveStock)}
                               title="Increase quantity"
-                              className="w-7 h-7 flex items-center justify-center text-[#C6A87C] hover:bg-[#1a1712] disabled:opacity-30 transition-colors cursor-pointer"
+                              className="w-7 h-7 flex items-center justify-center transition-colors cursor-pointer hover:bg-[var(--accent-gold)]/10 disabled:opacity-30"
+                              style={{ color: 'var(--accent-gold)' }}
                             >
                               <i className="ri-add-line text-xs" />
                             </button>
@@ -599,10 +760,13 @@ const Cart = () => {
                           {/* Line Total & Remove */}
                           <div className="flex items-center gap-4">
                             <div className="text-right">
-                              <span className="text-[9px] uppercase tracking-wider text-[#7a7267] block">
+                              <span
+                                className="text-[9px] uppercase tracking-wider block"
+                                style={{ color: 'var(--text-muted)' }}
+                              >
                                 Subtotal
                               </span>
-                              <span className="text-sm sm:text-base font-bold font-mono text-white tracking-tight">
+                              <span className="text-sm sm:text-base font-bold font-mono tracking-tight">
                                 {formatCurrency(item.lineTotal, item.price?.currency || currency)}
                               </span>
                             </div>
@@ -612,7 +776,13 @@ const Cart = () => {
                               onClick={() => onRemove(item)}
                               disabled={isMutating}
                               title="Remove Piece"
-                              className="w-8 h-8 rounded-lg bg-[#14120e] border border-[#26211a] hover:border-red-900/60 text-[#7a7267] hover:text-red-400 hover:bg-red-950/20 flex items-center justify-center transition-all cursor-pointer"
+                              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer hover:bg-red-500/10 hover:text-red-400"
+                              style={{
+                                backgroundColor: 'var(--bg-card-subtle)',
+                                borderColor: 'var(--border-card)',
+                                borderWidth: '1px',
+                                color: 'var(--text-secondary)',
+                              }}
                             >
                               <i className="ri-close-line text-sm" />
                             </button>
@@ -631,7 +801,8 @@ const Cart = () => {
                   type="button"
                   onClick={onClear}
                   disabled={isClearing}
-                  className="text-xs text-[#7a7267] hover:text-red-400 transition-colors flex items-center gap-1.5 uppercase tracking-wider font-semibold cursor-pointer py-1"
+                  className="text-xs hover:text-red-400 transition-colors flex items-center gap-1.5 uppercase tracking-wider font-semibold cursor-pointer py-1"
+                  style={{ color: 'var(--text-muted)' }}
                 >
                   <i className="ri-delete-bin-line text-xs" />
                   <span>Clear Entire Shopping Bag</span>
@@ -646,64 +817,83 @@ const Cart = () => {
             <div className="lg:col-span-5 xl:col-span-4 sticky top-24 space-y-4">
               
               {/* Summary Card */}
-              <div className="rounded-2xl bg-[#100f0d] border border-[#242019] p-5 sm:p-6 shadow-2xl space-y-5">
+              <div
+                className="rounded-2xl p-5 sm:p-6 shadow-2xl space-y-5"
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  borderColor: 'var(--border-card)',
+                  borderWidth: '1px',
+                }}
+              >
                 
                 {/* Card Title */}
-                <div className="flex items-center justify-between pb-3 border-b border-[#1f1b15]">
+                <div
+                  className="flex items-center justify-between pb-3 border-b"
+                  style={{ borderColor: 'var(--border-subtle)' }}
+                >
                   <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-3.5 rounded-full bg-[#C6A87C]" />
-                    <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white">
+                    <span className="w-1.5 h-3.5 rounded-full" style={{ backgroundColor: 'var(--accent-gold)' }} />
+                    <h3 className="text-xs font-bold uppercase tracking-[0.2em]">
                       Reservation Summary
                     </h3>
                   </div>
-                  <span className="text-[10px] text-[#C6A87C] font-mono uppercase tracking-wider font-semibold">
+                  <span
+                    className="text-[10px] font-mono uppercase tracking-wider font-semibold"
+                    style={{ color: 'var(--accent-gold)' }}
+                  >
                     {totalItems} {totalItems === 1 ? 'Piece' : 'Pieces'}
                   </span>
                 </div>
 
                 {/* Pricing Line Items */}
-                <div className="space-y-3 text-xs">
-                  <div className="flex items-center justify-between text-[#999084]">
+                <div className="space-y-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  <div className="flex items-center justify-between">
                     <span>Couture Subtotal</span>
-                    <span className="font-mono font-semibold text-white">
+                    <span className="font-mono font-semibold" style={{ color: 'var(--text-primary)' }}>
                       {formatCurrency(totalPrice, currency)}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between text-[#999084]">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <span>White Glove Delivery</span>
-                      <i className="ri-shield-check-line text-emerald-400 text-xs" />
+                      <i className="ri-shield-check-line text-emerald-500 text-xs" />
                     </div>
-                    <span className="text-emerald-400 font-semibold tracking-wider uppercase text-[11px]">
+                    <span className="text-emerald-500 font-semibold tracking-wider uppercase text-[11px]">
                       COMPLIMENTARY
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between text-[#999084]">
+                  <div className="flex items-center justify-between">
                     <span>Artisanal Keepsake Box</span>
-                    <span className="text-emerald-400 font-semibold tracking-wider uppercase text-[11px]">
+                    <span className="text-emerald-500 font-semibold tracking-wider uppercase text-[11px]">
                       COMPLIMENTARY
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between text-[#999084]">
+                  <div className="flex items-center justify-between">
                     <span>Handloom GST & Duties</span>
-                    <span className="font-medium text-gray-300">INCLUDED</span>
+                    <span className="font-medium">INCLUDED</span>
                   </div>
                 </div>
 
                 {/* Grand Total */}
-                <div className="pt-3 border-t border-[#1f1b15] flex items-baseline justify-between">
+                <div
+                  className="pt-3 border-t flex items-baseline justify-between"
+                  style={{ borderColor: 'var(--border-subtle)' }}
+                >
                   <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-[#C6A87C] block">
+                    <span
+                      className="text-xs font-bold uppercase tracking-wider block"
+                      style={{ color: 'var(--accent-gold)' }}
+                    >
                       Total Reservation
                     </span>
-                    <span className="text-[10px] text-[#6b645b]">
+                    <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
                       All taxes & insured delivery included
                     </span>
                   </div>
-                  <span className="text-xl sm:text-2xl font-bold font-mono text-white tracking-tight">
+                  <span className="text-xl sm:text-2xl font-bold font-mono tracking-tight">
                     {formatCurrency(totalPrice, currency)}
                   </span>
                 </div>
@@ -713,7 +903,8 @@ const Cart = () => {
                   <button
                     type="button"
                     onClick={onProceedToCheckout}
-                    className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-xs uppercase tracking-wider shadow-[0_4px_25px_rgba(198,168,124,0.3)] hover:shadow-[0_6px_30px_rgba(198,168,124,0.45)] hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    style={{ background: 'var(--accent-gradient)', color: 'var(--text-on-accent)' }}
                   >
                     <i className="ri-shield-check-line text-base" />
                     <span>Proceed to Bespoke Checkout</span>
@@ -721,17 +912,20 @@ const Cart = () => {
                 </div>
 
                 {/* Assurance Guarantee Strip */}
-                <div className="pt-2 border-t border-[#1a1713] space-y-2 text-[10px] text-[#7a7267] uppercase tracking-wider">
+                <div
+                  className="pt-2 border-t space-y-2 text-[10px] uppercase tracking-wider"
+                  style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
+                >
                   <div className="flex items-center gap-2">
-                    <i className="ri-checkbox-circle-fill text-[#C6A87C] text-xs" />
+                    <i className="ri-checkbox-circle-fill text-xs" style={{ color: 'var(--accent-gold)' }} />
                     <span>100% Certified Authentic Handloom Guaranteed</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <i className="ri-checkbox-circle-fill text-[#C6A87C] text-xs" />
+                    <i className="ri-checkbox-circle-fill text-xs" style={{ color: 'var(--accent-gold)' }} />
                     <span>Complimentary Insured Courier Over INR 15,000</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <i className="ri-checkbox-circle-fill text-[#C6A87C] text-xs" />
+                    <i className="ri-checkbox-circle-fill text-xs" style={{ color: 'var(--accent-gold)' }} />
                     <span>14-Day Bespoke Vault Exchange Guarantee</span>
                   </div>
                 </div>
@@ -749,20 +943,34 @@ const Cart = () => {
           CHECKOUT MODAL: SHIPPING ADDRESS & RAZORPAY GATEWAY TRIGGER
       ══════════════════════════════════════════════════════════════ */}
       {checkoutModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
-          <div className="bg-[#100f0d] border border-[#2b251d] max-w-lg w-full rounded-2xl p-6 sm:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.9)] space-y-6 my-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
+          <div
+            className="max-w-lg w-full rounded-2xl p-6 sm:p-7 shadow-2xl space-y-6 my-8"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--border-card)',
+              borderWidth: '1px',
+              color: 'var(--text-primary)',
+            }}
+          >
             
             {/* Header */}
-            <div className="flex items-start justify-between pb-4 border-b border-[#211d17]">
+            <div
+              className="flex items-start justify-between pb-4 border-b"
+              style={{ borderColor: 'var(--border-subtle)' }}
+            >
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#C6A87C] flex items-center gap-1.5">
+                <span
+                  className="text-[10px] font-bold uppercase tracking-[0.25em] flex items-center gap-1.5"
+                  style={{ color: 'var(--accent-gold)' }}
+                >
                   <i className="ri-vip-crown-fill text-xs" />
                   HAUTE COUTURE CHECKOUT
                 </span>
-                <h3 className="text-xl font-bold text-white mt-1">
+                <h3 className="text-xl font-bold mt-1">
                   Patron Delivery Details
                 </h3>
-                <p className="text-xs text-[#8a8278] mt-0.5">
+                <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
                   Insured White Glove Courier to your residence
                 </p>
               </div>
@@ -771,27 +979,49 @@ const Cart = () => {
                 type="button"
                 onClick={() => !isProcessingPayment && setCheckoutModalOpen(false)}
                 disabled={isProcessingPayment}
-                className="w-8 h-8 rounded-lg bg-[#181511] border border-[#2c261e] text-[#8a8278] hover:text-white hover:border-[#C6A87C]/50 flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer disabled:opacity-30 hover:border-[var(--accent-gold)]"
+                style={{
+                  backgroundColor: 'var(--bg-card-subtle)',
+                  borderColor: 'var(--border-subtle)',
+                  borderWidth: '1px',
+                  color: 'var(--text-secondary)',
+                }}
               >
                 <i className="ri-close-line text-base" />
               </button>
             </div>
 
             {/* Reservation Line Item Snapshot */}
-            <div className="p-3.5 rounded-xl bg-[#14120e] border border-[#241f19] flex items-center justify-between text-xs">
+            <div
+              className="p-3.5 rounded-xl flex items-center justify-between text-xs"
+              style={{
+                backgroundColor: 'var(--bg-card-subtle)',
+                borderColor: 'var(--border-subtle)',
+                borderWidth: '1px',
+              }}
+            >
               <div>
-                <span className="text-[10px] text-[#7a7267] uppercase tracking-wider block">
+                <span
+                  className="text-[10px] uppercase tracking-wider block"
+                  style={{ color: 'var(--text-muted)' }}
+                >
                   Reservation Summary
                 </span>
-                <span className="font-semibold text-gray-200">
+                <span className="font-semibold">
                   {totalItems} Haute Couture Piece{totalItems > 1 ? 's' : ''}
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-[10px] text-[#7a7267] uppercase tracking-wider block">
+                <span
+                  className="text-[10px] uppercase tracking-wider block"
+                  style={{ color: 'var(--text-muted)' }}
+                >
                   Total Payable
                 </span>
-                <span className="font-bold font-mono text-[#C6A87C] text-sm sm:text-base">
+                <span
+                  className="font-bold font-mono text-sm sm:text-base"
+                  style={{ color: 'var(--accent-gold)' }}
+                >
                   {formatCurrency(totalPrice, currency)}
                 </span>
               </div>
@@ -801,7 +1031,10 @@ const Cart = () => {
             <form onSubmit={handlePayWithRazorpay} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="text-[10px] uppercase tracking-wider font-semibold text-[#8a8278] block mb-1">
+                  <label
+                    className="text-[10px] uppercase tracking-wider font-semibold block mb-1"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
                     Patron Full Name *
                   </label>
                   <input
@@ -812,12 +1045,20 @@ const Cart = () => {
                       setShippingDetails({ ...shippingDetails, fullName: e.target.value })
                     }
                     placeholder="e.g. Maharaja Vikramaditya"
-                    className="w-full bg-[#0a0907] border border-[#262018] focus:border-[#C6A87C] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-[#504a40] outline-none transition-colors"
+                    className="w-full rounded-xl px-3.5 py-2.5 text-xs outline-none transition-colors border focus:border-[var(--accent-gold)]"
+                    style={{
+                      backgroundColor: 'var(--bg-card-subtle)',
+                      borderColor: 'var(--border-card)',
+                      color: 'var(--text-primary)',
+                    }}
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] uppercase tracking-wider font-semibold text-[#8a8278] block mb-1">
+                  <label
+                    className="text-[10px] uppercase tracking-wider font-semibold block mb-1"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
                     Phone Number *
                   </label>
                   <input
@@ -828,13 +1069,21 @@ const Cart = () => {
                       setShippingDetails({ ...shippingDetails, phoneNumber: e.target.value })
                     }
                     placeholder="e.g. 9876543210"
-                    className="w-full bg-[#0a0907] border border-[#262018] focus:border-[#C6A87C] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-[#504a40] outline-none transition-colors font-mono"
+                    className="w-full rounded-xl px-3.5 py-2.5 text-xs outline-none transition-colors border focus:border-[var(--accent-gold)] font-mono"
+                    style={{
+                      backgroundColor: 'var(--bg-card-subtle)',
+                      borderColor: 'var(--border-card)',
+                      color: 'var(--text-primary)',
+                    }}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] uppercase tracking-wider font-semibold text-[#8a8278] block mb-1">
+                <label
+                  className="text-[10px] uppercase tracking-wider font-semibold block mb-1"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
                   Residence / Street Address *
                 </label>
                 <input
@@ -845,13 +1094,21 @@ const Cart = () => {
                     setShippingDetails({ ...shippingDetails, streetAddress: e.target.value })
                   }
                   placeholder="e.g. 42 Royal Heritage Palace, Civil Lines"
-                  className="w-full bg-[#0a0907] border border-[#262018] focus:border-[#C6A87C] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-[#504a40] outline-none transition-colors"
+                  className="w-full rounded-xl px-3.5 py-2.5 text-xs outline-none transition-colors border focus:border-[var(--accent-gold)]"
+                  style={{
+                    backgroundColor: 'var(--bg-card-subtle)',
+                    borderColor: 'var(--border-card)',
+                    color: 'var(--text-primary)',
+                  }}
                 />
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="text-[10px] uppercase tracking-wider font-semibold text-[#8a8278] block mb-1">
+                  <label
+                    className="text-[10px] uppercase tracking-wider font-semibold block mb-1"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
                     City *
                   </label>
                   <input
@@ -862,12 +1119,20 @@ const Cart = () => {
                       setShippingDetails({ ...shippingDetails, city: e.target.value })
                     }
                     placeholder="e.g. Jaipur"
-                    className="w-full bg-[#0a0907] border border-[#262018] focus:border-[#C6A87C] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-[#504a40] outline-none transition-colors"
+                    className="w-full rounded-xl px-3.5 py-2.5 text-xs outline-none transition-colors border focus:border-[var(--accent-gold)]"
+                    style={{
+                      backgroundColor: 'var(--bg-card-subtle)',
+                      borderColor: 'var(--border-card)',
+                      color: 'var(--text-primary)',
+                    }}
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] uppercase tracking-wider font-semibold text-[#8a8278] block mb-1">
+                  <label
+                    className="text-[10px] uppercase tracking-wider font-semibold block mb-1"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
                     State *
                   </label>
                   <input
@@ -878,12 +1143,20 @@ const Cart = () => {
                       setShippingDetails({ ...shippingDetails, state: e.target.value })
                     }
                     placeholder="e.g. Rajasthan"
-                    className="w-full bg-[#0a0907] border border-[#262018] focus:border-[#C6A87C] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-[#504a40] outline-none transition-colors"
+                    className="w-full rounded-xl px-3.5 py-2.5 text-xs outline-none transition-colors border focus:border-[var(--accent-gold)]"
+                    style={{
+                      backgroundColor: 'var(--bg-card-subtle)',
+                      borderColor: 'var(--border-card)',
+                      color: 'var(--text-primary)',
+                    }}
                   />
                 </div>
 
                 <div className="col-span-2 sm:col-span-1">
-                  <label className="text-[10px] uppercase tracking-wider font-semibold text-[#8a8278] block mb-1">
+                  <label
+                    className="text-[10px] uppercase tracking-wider font-semibold block mb-1"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
                     PIN Code *
                   </label>
                   <input
@@ -894,18 +1167,26 @@ const Cart = () => {
                       setShippingDetails({ ...shippingDetails, postalCode: e.target.value })
                     }
                     placeholder="e.g. 302001"
-                    className="w-full bg-[#0a0907] border border-[#262018] focus:border-[#C6A87C] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-[#504a40] outline-none transition-colors font-mono"
+                    className="w-full rounded-xl px-3.5 py-2.5 text-xs outline-none transition-colors border focus:border-[var(--accent-gold)] font-mono"
+                    style={{
+                      backgroundColor: 'var(--bg-card-subtle)',
+                      borderColor: 'var(--border-card)',
+                      color: 'var(--text-primary)',
+                    }}
                   />
                 </div>
               </div>
 
               {/* Security & Gateways Guarantee */}
-              <div className="pt-2 flex items-center justify-between text-[10px] text-[#7a7267] border-t border-[#1d1913]">
-                <div className="flex items-center gap-1.5 text-emerald-400">
+              <div
+                className="pt-2 flex items-center justify-between text-[10px] border-t"
+                style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
+              >
+                <div className="flex items-center gap-1.5 text-emerald-500">
                   <i className="ri-shield-check-fill text-xs" />
                   <span>256-Bit SSL Encrypted</span>
                 </div>
-                <div className="flex items-center gap-1 text-[#C6A87C]">
+                <div className="flex items-center gap-1" style={{ color: 'var(--accent-gold)' }}>
                   <i className="ri-bank-card-line text-xs" />
                   <span>UPI • Cards • NetBanking</span>
                 </div>
@@ -916,7 +1197,8 @@ const Cart = () => {
                 <button
                   type="submit"
                   disabled={isProcessingPayment}
-                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-xs uppercase tracking-wider shadow-[0_4px_25px_rgba(198,168,124,0.3)] hover:shadow-[0_6px_30px_rgba(198,168,124,0.45)] hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                  className="w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                  style={{ background: 'var(--accent-gradient)', color: 'var(--text-on-accent)' }}
                 >
                   {isProcessingPayment ? (
                     <>
@@ -935,7 +1217,12 @@ const Cart = () => {
                   type="button"
                   onClick={() => setCheckoutModalOpen(false)}
                   disabled={isProcessingPayment}
-                  className="w-full py-2.5 rounded-xl border border-[#231e17] text-[#8a8278] hover:text-white text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
+                  className="w-full py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
+                  style={{
+                    borderColor: 'var(--border-card)',
+                    borderWidth: '1px',
+                    color: 'var(--text-secondary)',
+                  }}
                 >
                   Return to Bag
                 </button>
@@ -950,43 +1237,91 @@ const Cart = () => {
           ACQUISITION CONFIRMED MODAL: ORDER RECEIPT DETAILS
       ══════════════════════════════════════════════════════════════ */}
       {confirmedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto">
-          <div className="bg-[#100f0d] border border-[#C6A87C]/50 max-w-lg w-full rounded-2xl p-6 sm:p-7 shadow-[0_25px_70px_rgba(0,0,0,0.95)] space-y-6 my-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto">
+          <div
+            className="max-w-lg w-full rounded-2xl p-6 sm:p-7 shadow-2xl space-y-6 my-8"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--accent-gold)',
+              borderWidth: '1px',
+              color: 'var(--text-primary)',
+            }}
+          >
             
             {/* Crown Embellishment */}
-            <div className="w-16 h-16 rounded-2xl bg-[#17140f] border border-[#C6A87C]/50 flex items-center justify-center text-[#C6A87C] mx-auto shadow-[0_0_30px_rgba(198,168,124,0.25)]">
-              <i className="ri-vip-crown-fill text-3xl text-[#C6A87C]" />
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto shadow-lg"
+              style={{
+                backgroundColor: 'var(--bg-card-subtle)',
+                borderColor: 'var(--accent-gold)',
+                borderWidth: '1px',
+                color: 'var(--accent-gold)',
+              }}
+            >
+              <i className="ri-vip-crown-fill text-3xl" style={{ color: 'var(--accent-gold)' }} />
             </div>
 
             {/* Title & Patron Greeting */}
             <div className="text-center space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#C6A87C]">
+              <span
+                className="text-[10px] font-bold uppercase tracking-[0.25em]"
+                style={{ color: 'var(--accent-gold)' }}
+              >
                 HAUTE COUTURE RESERVATION CONFIRMED
               </span>
-              <h3 className="text-2xl font-bold text-white tracking-tight">
+              <h3 className="text-2xl font-bold tracking-tight">
                 Acquisition Confirmed
               </h3>
-              <p className="text-xs text-[#8a8278] max-w-sm mx-auto leading-relaxed pt-1">
+              <p
+                className="text-xs max-w-sm mx-auto leading-relaxed pt-1"
+                style={{ color: 'var(--text-secondary)' }}
+              >
                 Your payment has been cryptographically verified and your pieces have been reserved in the master atelier vault.
               </p>
             </div>
 
             {/* Order Badges */}
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="p-3 rounded-xl bg-[#14120e] border border-[#241f19]">
-                <span className="text-[9px] uppercase tracking-wider text-[#7a7267] block">
+              <div
+                className="p-3 rounded-xl"
+                style={{
+                  backgroundColor: 'var(--bg-card-subtle)',
+                  borderColor: 'var(--border-subtle)',
+                  borderWidth: '1px',
+                }}
+              >
+                <span
+                  className="text-[9px] uppercase tracking-wider block"
+                  style={{ color: 'var(--text-muted)' }}
+                >
                   Order ID
                 </span>
-                <span className="font-mono font-bold text-[#C6A87C] text-xs">
+                <span
+                  className="font-mono font-bold text-xs"
+                  style={{ color: 'var(--accent-gold)' }}
+                >
                   #{confirmedOrder._id?.slice(-8).toUpperCase()}
                 </span>
               </div>
 
-              <div className="p-3 rounded-xl bg-[#14120e] border border-[#241f19]">
-                <span className="text-[9px] uppercase tracking-wider text-[#7a7267] block">
+              <div
+                className="p-3 rounded-xl"
+                style={{
+                  backgroundColor: 'var(--bg-card-subtle)',
+                  borderColor: 'var(--border-subtle)',
+                  borderWidth: '1px',
+                }}
+              >
+                <span
+                  className="text-[9px] uppercase tracking-wider block"
+                  style={{ color: 'var(--text-muted)' }}
+                >
                   Payment Reference
                 </span>
-                <span className="font-mono text-gray-200 text-[11px] truncate block" title={confirmedOrder.razorpayPaymentId}>
+                <span
+                  className="font-mono text-[11px] truncate block"
+                  title={confirmedOrder.razorpayPaymentId}
+                >
                   {confirmedOrder.razorpayPaymentId || confirmedOrder.razorpayOrderId}
                 </span>
               </div>
@@ -994,17 +1329,32 @@ const Cart = () => {
 
             {/* Pieces Snapshot */}
             <div className="space-y-2">
-              <span className="text-[10px] uppercase tracking-wider text-[#7a7267] font-semibold block">
+              <span
+                className="text-[10px] uppercase tracking-wider font-semibold block"
+                style={{ color: 'var(--text-muted)' }}
+              >
                 Reserved Pieces ({confirmedOrder.items?.length || 0})
               </span>
-              <div className="max-h-40 overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-[#25211b]">
+              <div className="max-h-40 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
                 {confirmedOrder.items?.map((item, idx) => (
                   <div
                     key={idx}
-                    className="p-2.5 rounded-xl bg-[#14120e] border border-[#241f19] flex items-center justify-between gap-3 text-xs"
+                    className="p-2.5 rounded-xl flex items-center justify-between gap-3 text-xs"
+                    style={{
+                      backgroundColor: 'var(--bg-card-subtle)',
+                      borderColor: 'var(--border-subtle)',
+                      borderWidth: '1px',
+                    }}
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-12 rounded-lg bg-[#181510] border border-[#28221a] overflow-hidden shrink-0">
+                      <div
+                        className="w-10 h-12 rounded-lg overflow-hidden shrink-0"
+                        style={{
+                          backgroundColor: 'var(--bg-canvas)',
+                          borderColor: 'var(--border-subtle)',
+                          borderWidth: '1px',
+                        }}
+                      >
                         {item.resolvedImage ? (
                           <img
                             src={getImageUrl(item.resolvedImage, 100)}
@@ -1012,21 +1362,24 @@ const Cart = () => {
                             className="w-full h-full object-cover object-top"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[#C6A87C]">
+                          <div
+                            className="w-full h-full flex items-center justify-center"
+                            style={{ color: 'var(--accent-gold)' }}
+                          >
                             <i className="ri-vip-crown-fill text-xs" />
                           </div>
                         )}
                       </div>
                       <div>
-                        <span className="font-semibold text-white block leading-tight">
+                        <span className="font-semibold block leading-tight">
                           {item.title}
                         </span>
-                        <span className="text-[10px] text-[#8a8278]">
+                        <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>
                           Qty: {item.quantity} × {formatCurrency(item.price, confirmedOrder.currency)}
                         </span>
                       </div>
                     </div>
-                    <span className="font-mono font-bold text-gray-200">
+                    <span className="font-mono font-bold">
                       {formatCurrency(item.quantity * item.price, confirmedOrder.currency)}
                     </span>
                   </div>
@@ -1035,26 +1388,43 @@ const Cart = () => {
             </div>
 
             {/* Delivery & Payment Total Snapshot */}
-            <div className="p-3.5 rounded-xl bg-[#14120e] border border-[#241f19] space-y-2 text-xs">
-              <div className="flex justify-between text-[#8a8278]">
+            <div
+              className="p-3.5 rounded-xl space-y-2 text-xs"
+              style={{
+                backgroundColor: 'var(--bg-card-subtle)',
+                borderColor: 'var(--border-subtle)',
+                borderWidth: '1px',
+              }}
+            >
+              <div className="flex justify-between" style={{ color: 'var(--text-secondary)' }}>
                 <span>Delivery Recipient:</span>
-                <span className="text-gray-200 font-medium">
+                <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
                   {confirmedOrder.shippingAddress?.fullName || user.fullname || user.email}
                 </span>
               </div>
-              <div className="flex justify-between text-[#8a8278]">
+              <div className="flex justify-between" style={{ color: 'var(--text-secondary)' }}>
                 <span>Shipping Address:</span>
-                <span className="text-gray-200 text-right max-w-[240px] truncate" title={`${confirmedOrder.shippingAddress?.streetAddress}, ${confirmedOrder.shippingAddress?.city}, ${confirmedOrder.shippingAddress?.state} - ${confirmedOrder.shippingAddress?.postalCode}`}>
+                <span
+                  className="text-right max-w-[240px] truncate"
+                  title={`${confirmedOrder.shippingAddress?.streetAddress}, ${confirmedOrder.shippingAddress?.city}, ${confirmedOrder.shippingAddress?.state} - ${confirmedOrder.shippingAddress?.postalCode}`}
+                  style={{ color: 'var(--text-primary)' }}
+                >
                   {confirmedOrder.shippingAddress?.streetAddress
                     ? `${confirmedOrder.shippingAddress.streetAddress}, ${confirmedOrder.shippingAddress.city}`
                     : 'Registered Patron Address'}
                 </span>
               </div>
-              <div className="pt-2 border-t border-[#1f1b15] flex justify-between items-baseline">
-                <span className="font-semibold text-white uppercase tracking-wider text-[11px]">
+              <div
+                className="pt-2 border-t flex justify-between items-baseline"
+                style={{ borderColor: 'var(--border-subtle)' }}
+              >
+                <span className="font-semibold uppercase tracking-wider text-[11px]">
                   Total Paid:
                 </span>
-                <span className="font-mono font-bold text-[#C6A87C] text-base">
+                <span
+                  className="font-mono font-bold text-base"
+                  style={{ color: 'var(--accent-gold)' }}
+                >
                   {formatCurrency(confirmedOrder.totalAmount, confirmedOrder.currency)}
                 </span>
               </div>
@@ -1068,7 +1438,8 @@ const Cart = () => {
                   setConfirmedOrder(null);
                   navigate('/');
                 }}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#dfca9f] text-[#080806] font-bold text-xs uppercase tracking-wider shadow-[0_4px_25px_rgba(198,168,124,0.3)] hover:scale-[1.01] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg hover:scale-[1.01] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                style={{ background: 'var(--accent-gradient)', color: 'var(--text-on-accent)' }}
               >
                 <i className="ri-compass-3-line text-sm" />
                 <span>Explore Further Collections</span>
@@ -1077,7 +1448,12 @@ const Cart = () => {
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="w-full py-2.5 rounded-xl border border-[#262019] text-[#8a8278] hover:text-white text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                style={{
+                  borderColor: 'var(--border-card)',
+                  borderWidth: '1px',
+                  color: 'var(--text-secondary)',
+                }}
               >
                 <i className="ri-printer-line text-xs" />
                 <span>Print Atelier Receipt</span>

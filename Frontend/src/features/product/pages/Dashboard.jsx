@@ -23,11 +23,17 @@ const formatDate = (isoString) => {
 };
 
 import { getImageUrl } from '../../../utils/image';
+import { CraftVariantModal } from '../components/CraftVariantModal';
+import { DeleteProductModal } from '../components/DeleteProductModal';
+import { ManageDiscountModal } from '../components/ManageDiscountModal';
 
-const ProductGridCard = ({ product, onInspect }) => {
+const ProductGridCard = ({ product, onInspect, onAddVariant, onManageDiscount, onDeleteProduct }) => {
   const [imgError, setImgError] = useState(false);
   const coverUrl = getImageUrl(product?.images?.[0]);
   const imageCount = product?.images?.length || 0;
+  const variantCount = product?.variants?.length || 0;
+  const hasDiscount = Boolean(product?.discount > 0);
+  const hasOriginalPrice = Boolean(product?.originalPrice > product?.price?.amount);
 
   return (
     <div className="group relative rounded-2xl bg-[#100f0d] border border-[#2a2520] hover:border-[#C6A87C]/50 transition-all duration-300 overflow-hidden flex flex-col justify-between shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_20px_40px_rgba(198,168,124,0.1)]">
@@ -60,26 +66,42 @@ const ProductGridCard = ({ product, onInspect }) => {
 
         {/* Badges Over Image */}
         <div className="absolute top-3 inset-x-3 flex items-center justify-between z-10 pointer-events-none">
-          <span className="px-2.5 py-1 rounded-md bg-black/75 backdrop-blur-md border border-white/10 text-[9px] font-extrabold uppercase tracking-widest text-[#C6A87C]">
-            Vastra Loom
-          </span>
-
-          {imageCount > 1 && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/85 backdrop-blur-md text-gray-200 text-[10px] font-mono border border-[#3a342c] shadow-sm">
-              <i className="ri-image-2-line text-xs text-[#C6A87C]" />
-              {imageCount} Visuals
+          <div className="flex items-center gap-1.5">
+            <span className="px-2.5 py-1 rounded-md bg-black/75 backdrop-blur-md border border-white/10 text-[9px] font-extrabold uppercase tracking-widest text-[#C6A87C]">
+              Vastra Loom
             </span>
-          )}
+            {hasDiscount && (
+              <span className="px-2 py-0.5 rounded-md bg-[#C6A87C] text-[#080806] font-extrabold font-mono text-[9px] uppercase tracking-wider shadow-sm">
+                {product.discount}% OFF
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            {variantCount > 0 && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/85 backdrop-blur-md text-[#C6A87C] text-[10px] font-mono border border-[#C6A87C]/40 shadow-sm">
+                <i className="ri-stack-line text-xs" />
+                {variantCount} Variant{variantCount > 1 ? 's' : ''}
+              </span>
+            )}
+            {imageCount > 1 && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/85 backdrop-blur-md text-gray-200 text-[10px] font-mono border border-[#3a342c] shadow-sm">
+                <i className="ri-image-2-line text-xs text-[#C6A87C]" />
+                {imageCount}
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Hover Quick Action: Inspect Piece */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 bg-black/40 backdrop-blur-xs">
+        {/* Hover Quick Action Overlay: High-fashion single Inspect Piece CTA */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 bg-black/55 backdrop-blur-xs px-3">
           <Link
             to={`/seller/product/${product._id}`}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#C6A87C] to-[#e8d5aa] text-[#080806] text-xs font-bold uppercase tracking-wider shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 rounded-full bg-black/85 backdrop-blur-md border border-[#C6A87C]/60 hover:border-[#C6A87C] text-white hover:text-[#C6A87C] text-xs font-semibold uppercase tracking-widest transition-all duration-200 shadow-xl flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95"
+            title="Inspect Piece Details & Variants"
           >
-            <i className="ri-eye-line text-sm" />
-            Inspect Piece
+            <i className="ri-eye-line text-sm text-[#C6A87C]" />
+            <span>Inspect Piece</span>
           </Link>
         </div>
       </div>
@@ -111,18 +133,57 @@ const ProductGridCard = ({ product, onInspect }) => {
             <span className="text-xs text-[#6e675f] block font-mono text-[10px] uppercase">
               Valuation
             </span>
-            <span className="text-lg font-bold text-white tracking-tight font-mono">
-              {formatCurrency(product?.price?.amount, product?.price?.currency)}
-            </span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-lg font-bold text-white tracking-tight font-mono">
+                {formatCurrency(product?.price?.amount, product?.price?.currency)}
+              </span>
+              {hasOriginalPrice && (
+                <span className="text-xs text-[#8a8278] line-through font-mono">
+                  {formatCurrency(product?.originalPrice, product?.price?.currency)}
+                </span>
+              )}
+            </div>
           </div>
 
-          <Link
-            to={`/seller/product/${product._id}`}
-            className="p-2 rounded-lg border border-[#2a2520] hover:border-[#C6A87C]/50 text-gray-400 hover:text-white transition-colors cursor-pointer"
-            title="Manage Piece & Variants"
-          >
-            <i className="ri-arrow-right-up-line text-sm" />
-          </Link>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddVariant(product);
+              }}
+              className="px-2.5 py-1.5 rounded-lg bg-[#181511] border border-[#C6A87C]/40 hover:bg-[#C6A87C] hover:text-[#080806] text-[#C6A87C] text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer shadow-xs"
+              title="Add Variant to this piece"
+            >
+              <i className="ri-add-line text-xs font-bold" />
+              <span>+ Variant</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onManageDiscount(product);
+              }}
+              className="px-2 py-1.5 rounded-lg bg-[#181511] border border-amber-600/40 hover:bg-amber-600 hover:text-black text-amber-300 text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer shadow-xs flex items-center gap-1"
+              title="Manage Discount & Pricing"
+            >
+              <i className="ri-percent-line text-xs" />
+              <span>Disc</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteProduct(product);
+              }}
+              className="p-1.5 px-2 rounded-lg border border-rose-900/40 hover:bg-rose-950/80 hover:border-rose-700 text-rose-400 hover:text-rose-300 transition-colors cursor-pointer"
+              title="Permanently Delete Piece"
+            >
+              <i className="ri-delete-bin-line text-xs" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -132,13 +193,37 @@ const ProductGridCard = ({ product, onInspect }) => {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { handleGetSellerProduct, loading, error, sellerProducts = [] } = useProduct();
+  const {
+    handleGetSellerProduct,
+    handleDeleteProduct,
+    handleUpdateProductDiscount,
+    loading,
+    error,
+    sellerProducts = []
+  } = useProduct();
 
   // Local UI State
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('newest'); // 'newest' | 'price-desc' | 'price-asc' | 'title'
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
   const [copiedId, setCopiedId] = useState(false);
+  const [variantModalProduct, setVariantModalProduct] = useState(null);
+  const [deleteModalProduct, setDeleteModalProduct] = useState(null);
+  const [discountModalProduct, setDiscountModalProduct] = useState(null);
+  const [variantSuccessToast, setVariantSuccessToast] = useState(null);
+
+  const handleConfirmDelete = async (productId) => {
+    await handleDeleteProduct(productId);
+    setVariantSuccessToast('Piece permanently retired and deleted from Atelier.');
+    setTimeout(() => setVariantSuccessToast(null), 4000);
+  };
+
+  const handleSaveDiscount = async (productId, data) => {
+    await handleUpdateProductDiscount(productId, data);
+    setVariantSuccessToast('Pricing and discount updated successfully.');
+    setTimeout(() => setVariantSuccessToast(null), 4000);
+    handleGetSellerProduct();
+  };
 
   // Fetch products on mount
   useEffect(() => {
@@ -487,6 +572,9 @@ const Dashboard = () => {
               <ProductGridCard
                 key={product._id}
                 product={product}
+                onAddVariant={(p) => setVariantModalProduct(p)}
+                onManageDiscount={(p) => setDiscountModalProduct(p)}
+                onDeleteProduct={(p) => setDeleteModalProduct(p)}
               />
             ))}
           </div>
@@ -500,6 +588,7 @@ const Dashboard = () => {
                     <th className="py-3.5 px-4 sm:px-6">Piece / Title</th>
                     <th className="py-3.5 px-4">Valuation</th>
                     <th className="py-3.5 px-4 hidden md:table-cell">Visuals</th>
+                    <th className="py-3.5 px-4 hidden md:table-cell">Editions</th>
                     <th className="py-3.5 px-4 hidden sm:table-cell">Catalogued</th>
                     <th className="py-3.5 px-4">Status</th>
                     <th className="py-3.5 px-4 text-right">Actions</th>
@@ -551,13 +640,35 @@ const Dashboard = () => {
                         </td>
 
                         {/* Price */}
-                        <td className="py-3.5 px-4 font-mono font-bold text-white text-sm">
-                          {formatCurrency(product?.price?.amount, product?.price?.currency)}
+                        <td className="py-3.5 px-4 font-mono">
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="font-bold text-white text-sm">
+                              {formatCurrency(product?.price?.amount, product?.price?.currency)}
+                            </span>
+                            {product?.originalPrice > product?.price?.amount && (
+                              <span className="text-xs text-[#6e675f] line-through">
+                                {formatCurrency(product?.originalPrice, product?.price?.currency)}
+                              </span>
+                            )}
+                          </div>
+                          {product?.discount > 0 && (
+                            <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded bg-[#C6A87C]/20 border border-[#C6A87C]/40 text-[#C6A87C] text-[9px] font-bold uppercase tracking-wider">
+                              {product.discount}% OFF
+                            </span>
+                          )}
                         </td>
 
                         {/* Images count */}
                         <td className="py-3.5 px-4 hidden md:table-cell text-[#8a8278] font-mono">
                           {product?.images?.length || 0} Photo{(product?.images?.length || 0) > 1 ? 's' : ''}
+                        </td>
+
+                        {/* Editions count */}
+                        <td className="py-3.5 px-4 hidden md:table-cell">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-[#14120e] border border-[#2a2520] text-[#C6A87C]">
+                            <i className="ri-stack-line text-xs" />
+                            {product?.variants?.length || 0} Edition{product?.variants?.length === 1 ? '' : 's'}
+                          </span>
                         </td>
 
                         {/* Date */}
@@ -575,14 +686,50 @@ const Dashboard = () => {
 
                         {/* Action */}
                         <td className="py-3.5 px-4 text-right">
-                          <Link
-                            to={`/seller/product/${product._id}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="px-3 py-1.5 rounded-lg border border-[#2a2520] hover:border-[#C6A87C]/60 text-gray-300 hover:text-[#C6A87C] bg-[#0d0c0b] text-[11px] font-medium transition-colors inline-flex items-center gap-1 cursor-pointer"
-                          >
-                            <span>Manage</span>
-                            <i className="ri-arrow-right-up-line text-xs" />
-                          </Link>
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setVariantModalProduct(product);
+                              }}
+                              className="px-2.5 py-1.5 rounded-lg bg-[#14120e] border border-[#C6A87C]/40 hover:bg-[#C6A87C] hover:text-[#080806] text-[#C6A87C] text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-xs"
+                              title="Add variant edition to this product"
+                            >
+                              + Var
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDiscountModalProduct(product);
+                              }}
+                              className="px-2.5 py-1.5 rounded-lg bg-[#14120e] border border-amber-600/40 hover:bg-amber-600 hover:text-black text-amber-300 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-xs flex items-center gap-1"
+                              title="Manage Discount & Pricing"
+                            >
+                              <i className="ri-percent-line" />
+                              <span>Disc</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteModalProduct(product);
+                              }}
+                              className="p-1.5 rounded-lg border border-rose-900/40 hover:bg-rose-950/80 hover:border-rose-700 text-rose-400 hover:text-rose-300 transition-colors cursor-pointer"
+                              title="Retire & Delete Piece"
+                            >
+                              <i className="ri-delete-bin-line text-xs" />
+                            </button>
+                            <Link
+                              to={`/seller/product/${product._id}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="px-3 py-1.5 rounded-lg border border-[#2a2520] hover:border-[#C6A87C]/60 text-gray-300 hover:text-[#C6A87C] bg-[#0d0c0b] text-[11px] font-medium transition-colors inline-flex items-center gap-1 cursor-pointer"
+                            >
+                              <span>Manage</span>
+                              <i className="ri-arrow-right-up-line text-xs" />
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -594,6 +741,42 @@ const Dashboard = () => {
         )}
 
       </main>
+
+      {/* ── Craft Variant Modal ── */}
+      <CraftVariantModal
+        isOpen={Boolean(variantModalProduct)}
+        onClose={() => setVariantModalProduct(null)}
+        product={variantModalProduct}
+        onSuccess={(updated) => {
+          setVariantSuccessToast(`New edition crafted for "${variantModalProduct?.title}"!`);
+          setTimeout(() => setVariantSuccessToast(null), 4000);
+          handleGetSellerProduct();
+        }}
+      />
+
+      {/* ── Manage Discount Modal ── */}
+      <ManageDiscountModal
+        isOpen={Boolean(discountModalProduct)}
+        onClose={() => setDiscountModalProduct(null)}
+        product={discountModalProduct}
+        onSaveDiscount={handleSaveDiscount}
+      />
+
+      {/* ── Delete Product Confirmation Modal ── */}
+      <DeleteProductModal
+        isOpen={Boolean(deleteModalProduct)}
+        onClose={() => setDeleteModalProduct(null)}
+        product={deleteModalProduct}
+        onConfirmDelete={handleConfirmDelete}
+      />
+
+      {/* ── Feedback Notification Toast ── */}
+      {variantSuccessToast && (
+        <div className="fixed top-20 right-6 z-50 bg-[#100f0d] border border-emerald-500/60 text-emerald-400 text-xs px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 animate-in fade-in duration-300">
+          <i className="ri-checkbox-circle-fill text-emerald-400 text-sm" />
+          <span>{variantSuccessToast}</span>
+        </div>
+      )}
 
       {/* ── Footer ── */}
       <footer className="w-full border-t border-[#1a1713] bg-[#050504] py-6 mt-16">

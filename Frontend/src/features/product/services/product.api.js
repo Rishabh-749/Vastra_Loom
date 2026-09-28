@@ -43,3 +43,13 @@ export const updateProductStock = async (productId, stock) => {
     });
     return response.data;
 };
+
+export const deleteProduct = async (productId) => {
+    const response = await productApiInstance.delete(`/${productId}`);
+    return response.data;
+};
+
+export const updateProductDiscount = async (productId, data) => {
+    const response = await productApiInstance.patch(`/${productId}/discount`, data);
+    return response.data;
+};

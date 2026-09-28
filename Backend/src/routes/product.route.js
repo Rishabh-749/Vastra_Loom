@@ -8,7 +8,9 @@ import {
     getProductDetails,
     addProductVariant,
     updateVariantStock,
-    updateProductStock
+    updateProductStock,
+    deleteProduct,
+    updateProductDiscount
 } from "../controllers/product.controller.js";
 import { createProductValidator } from "../validators/product.validator.js";
 
@@ -30,6 +32,18 @@ productRouter.get("/seller", authenticateSeller, getSellerProducts);
  * @description Get product details by ID (Public)
  */
 productRouter.get("/detail/:id", getProductDetails);
+
+/**
+ * @route DELETE /api/products/:productId
+ * @description Delete a product permanently (Seller only)
+ */
+productRouter.delete("/:productId", authenticateSeller, deleteProduct);
+
+/**
+ * @route PATCH /api/products/:productId/discount
+ * @description Update product discount and pricing (Seller only)
+ */
+productRouter.patch("/:productId/discount", authenticateSeller, updateProductDiscount);
 
 /**
  * @route POST /api/products/:productId/variants

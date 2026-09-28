@@ -7,14 +7,18 @@ import {
     getProductDetails,
     addProductVariant,
     updateVariantStock,
-    updateProductStock
+    updateProductStock,
+    deleteProduct,
+    updateProductDiscount
 } from "../services/product.api";
 import {
     setSellerProducts,
     setAllProducts,
     setCurrentProduct,
     setLoading,
-    setError
+    setError,
+    removeProduct,
+    updateProductInState
 } from "../state/product.slice";
 
 export const useProduct = () => {
@@ -155,6 +159,40 @@ export const useProduct = () => {
         }
     };
 
+    const handleDeleteProduct = async (productId) => {
+        setLocalLoading(true);
+        setLocalError(null);
+        try {
+            const data = await deleteProduct(productId);
+            dispatch(removeProduct(productId));
+            return data;
+        } catch (err) {
+            const errorMessage = err?.response?.data?.message || err?.message || "Failed to delete product";
+            setLocalError(errorMessage);
+            throw err;
+        } finally {
+            setLocalLoading(false);
+        }
+    };
+
+    const handleUpdateProductDiscount = async (productId, updateData) => {
+        setLocalLoading(true);
+        setLocalError(null);
+        try {
+            const data = await updateProductDiscount(productId, updateData);
+            if (data?.product) {
+                dispatch(updateProductInState(data.product));
+            }
+            return data.product;
+        } catch (err) {
+            const errorMessage = err?.response?.data?.message || err?.message || "Failed to update discount";
+            setLocalError(errorMessage);
+            throw err;
+        } finally {
+            setLocalLoading(false);
+        }
+    };
+
     return {
         handleCreateProduct,
         handleGetSellerProduct,
@@ -163,6 +201,8 @@ export const useProduct = () => {
         handleAddProductVariant,
         handleUpdateVariantStock,
         handleUpdateProductStock,
+        handleDeleteProduct,
+        handleUpdateProductDiscount,
         loading: loading || reduxLoading,
         error: error || reduxError,
         allProducts,

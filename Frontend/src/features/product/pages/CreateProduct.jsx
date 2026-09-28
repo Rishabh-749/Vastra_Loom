@@ -4,6 +4,7 @@ import 'remixicon/fonts/remixicon.css';
 import ShinyText from '../../../components/ShinyText';
 import Navbar from '../../../components/Navbar';
 import { useProduct } from '../hooks/useProduct';
+import { addProductVariant } from '../services/product.api';
 
 const MAX_IMAGES = 7;
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
@@ -29,6 +30,9 @@ const CreateProduct = () => {
     description: '',
     priceAmount: '',
     priceCurrency: 'INR',
+    discount: '',
+    originalPrice: '',
+    stock: '50',
   });
 
   const [images, setImages] = useState([]); // [{ id, file, previewUrl, name, size }]
@@ -36,6 +40,14 @@ const CreateProduct = () => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  // ── Staged Initial Variants ─────────────────────────────────────────────────
+  const [stagedVariants, setStagedVariants] = useState([]);
+  const [showVariantStudio, setShowVariantStudio] = useState(false);
+  const [variantKey, setVariantKey] = useState('Size');
+  const [variantVal, setVariantVal] = useState('');
+  const [variantPrice, setVariantPrice] = useState('');
+  const [variantStock, setVariantStock] = useState('10');
 
   // Store images in a ref for unmount-only cleanup
   const imagesRef = useRef(images);
@@ -180,6 +192,15 @@ const CreateProduct = () => {
     payload.append('description', formData.description.trim());
     payload.append('priceAmount', Number(formData.priceAmount));
     payload.append('priceCurrency', formData.priceCurrency);
+    if (formData.discount) {
+      payload.append('discount', Number(formData.discount));
+    }
+    if (formData.originalPrice) {
+      payload.append('originalPrice', Number(formData.originalPrice));
+    }
+    if (formData.stock) {
+      payload.append('stock', Number(formData.stock));
+    }
 
     // Primary cover first, then remaining
     images.forEach((img) => {
@@ -187,12 +208,54 @@ const CreateProduct = () => {
     });
 
     try {
-      await handleCreateProduct(payload);
-      setSuccessMsg('Product created successfully!');
+      const created = await handleCreateProduct(payload);
+      if (created?._id && stagedVariants.length > 0) {
+        for (const sv of stagedVariants) {
+          try {
+            const vData = new FormData();
+            vData.append('attributes', JSON.stringify(sv.attributes));
+            if (sv.priceAmount) {
+              vData.append('priceAmount', sv.priceAmount);
+            }
+            vData.append('priceCurrency', sv.priceCurrency);
+            vData.append('stock', sv.stock);
+            await addProductVariant(created._id, vData);
+          } catch (err) {
+            console.warn('Failed to add initial variant:', err);
+          }
+        }
+      }
+      setSuccessMsg(
+        stagedVariants.length > 0
+          ? `Product & ${stagedVariants.length} initial editions created successfully!`
+          : 'Product created successfully!'
+      );
       setTimeout(() => navigate('/seller/dashboard'), 1400);
     } catch (err) {
       // apiError is also synced in hook
     }
+  };
+
+  const handleAddStagedVariant = () => {
+    const k = variantKey.trim();
+    const v = variantVal.trim();
+    if (!k || !v) return;
+
+    setStagedVariants((prev) => [
+      ...prev,
+      {
+        id: `staged-${Date.now()}-${Math.random()}`,
+        attributes: { [k]: v },
+        priceAmount: variantPrice !== '' ? Number(variantPrice) : (Number(formData.priceAmount) || undefined),
+        priceCurrency: formData.priceCurrency,
+        stock: Math.max(0, Number(variantStock) || 0),
+      },
+    ]);
+    setVariantVal('');
+  };
+
+  const handleRemoveStagedVariant = (id) => {
+    setStagedVariants((prev) => prev.filter((item) => item.id !== id));
   };
 
   const handleReset = () => {
@@ -201,8 +264,12 @@ const CreateProduct = () => {
       description: '',
       priceAmount: '',
       priceCurrency: 'INR',
+      discount: '',
+      originalPrice: '',
+      stock: '50',
     });
     setImages([]);
+    setStagedVariants([]);
     setErrorMsg('');
     setSuccessMsg('');
   };
@@ -435,7 +502,7 @@ const CreateProduct = () => {
           )}
 
           {/* Form Fields container - fills nicely */}
-          <div className="flex-1 flex flex-col justify-around py-1 gap-3.5 min-h-0">
+          <div className="flex-1 flex flex-col py-1 gap-3 min-h-0 overflow-y-auto pr-1 no-scrollbar">
             
             {/* Field: Title */}
             <div className="space-y-1">
@@ -525,19 +592,193 @@ const CreateProduct = () => {
               </div>
             </div>
 
-            {/* Field: Description (flex-1 to balance height) */}
-            <div className="space-y-1 flex-1 flex flex-col min-h-0">
+            {/* Field: Discount, MRP & Stock */}
+            <div className="grid grid-cols-12 gap-3">
+              <div className="col-span-4 space-y-1">
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#a0988e]">
+                  Discount (%)
+                </label>
+                <div className="relative group">
+                  <input
+                    type="number"
+                    min="0"
+                    max="99"
+                    name="discount"
+                    value={formData.discount}
+                    onChange={handleInputChange}
+                    placeholder="e.g. 20"
+                    className="w-full pl-3 pr-7 py-2.5 bg-[#0d0c0b] border border-[#2a2520] rounded-xl text-sm text-gray-100 placeholder-[#4a4641] focus:outline-none focus:border-[#C6A87C]/70 transition-colors font-mono"
+                  />
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#C6A87C] text-xs font-bold font-mono">
+                    %
+                  </span>
+                </div>
+              </div>
+
+              <div className="col-span-4 space-y-1">
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#a0988e]">
+                  Original MRP
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  name="originalPrice"
+                  value={formData.originalPrice}
+                  onChange={handleInputChange}
+                  placeholder="Optional"
+                  className="w-full px-3 py-2.5 bg-[#0d0c0b] border border-[#2a2520] rounded-xl text-sm text-gray-100 placeholder-[#4a4641] focus:outline-none focus:border-[#C6A87C]/70 transition-colors font-mono"
+                />
+              </div>
+
+              <div className="col-span-4 space-y-1">
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#a0988e]">
+                  Stock Units
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  name="stock"
+                  value={formData.stock}
+                  onChange={handleInputChange}
+                  placeholder="e.g. 50"
+                  className="w-full px-3 py-2.5 bg-[#0d0c0b] border border-[#2a2520] rounded-xl text-sm text-gray-100 placeholder-[#4a4641] focus:outline-none focus:border-[#C6A87C]/70 transition-colors font-mono"
+                />
+              </div>
+            </div>
+
+            {/* Live Discount Savings Preview */}
+            {Number(formData.discount) > 0 && Number(formData.priceAmount) > 0 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#C6A87C]/10 border border-[#C6A87C]/30 text-xs text-[#C6A87C]">
+                <i className="ri-discount-percent-line text-sm" />
+                <span>
+                  Patrons see: <strong>{formData.discount}% OFF</strong> (Strike-through MRP: {currentSymbol}{' '}
+                  {(formData.originalPrice || Math.round(Number(formData.priceAmount) / (1 - Number(formData.discount) / 100))).toLocaleString('en-IN')})
+                </span>
+              </div>
+            )}
+
+            {/* Field: Description */}
+            <div className="space-y-1 min-h-0">
               <label className="text-xs font-semibold uppercase tracking-wider text-[#a0988e]">
                 Description <span className="text-[#C6A87C]">*</span>
               </label>
               <textarea
                 name="description"
-                rows={4}
+                rows={3}
                 value={formData.description}
                 onChange={handleInputChange}
                 placeholder="Fabric composition, fit silhouette, wash care and styling tips..."
-                className="w-full flex-1 p-3 bg-[#0d0c0b] border border-[#2a2520] rounded-xl text-sm text-gray-100 placeholder-[#4a4641] focus:outline-none focus:border-[#C6A87C]/70 transition-colors resize-none leading-relaxed min-h-[90px]"
+                className="w-full p-3 bg-[#0d0c0b] border border-[#2a2520] rounded-xl text-sm text-gray-100 placeholder-[#4a4641] focus:outline-none focus:border-[#C6A87C]/70 transition-colors resize-none leading-relaxed min-h-[75px]"
               />
+            </div>
+
+            {/* Optional: Initial Editions & Variants Builder */}
+            <div className="rounded-xl border border-[#2a2520] bg-[#0d0c0b] p-3 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setShowVariantStudio(!showVariantStudio)}
+                  className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#C6A87C] hover:text-white transition-colors cursor-pointer"
+                >
+                  <i className={showVariantStudio ? "ri-arrow-down-s-line" : "ri-arrow-right-s-line"} />
+                  <span>Initial Editions / Variants (Optional)</span>
+                  {stagedVariants.length > 0 && (
+                    <span className="px-1.5 py-0.2 rounded-full bg-[#1c1914] text-[#C6A87C] text-[10px] font-mono border border-[#C6A87C]/40">
+                      {stagedVariants.length}
+                    </span>
+                  )}
+                </button>
+                <span className="text-[10px] text-[#6e675f]">
+                  Add sizes/colors to publish together
+                </span>
+              </div>
+
+              {showVariantStudio && (
+                <div className="space-y-2.5 pt-2 border-t border-[#1f1b15]">
+                  {/* Preset chips */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] text-[#6e675f] font-mono uppercase">Attribute:</span>
+                    {['Size', 'Color', 'Fabric', 'Weave'].map((k) => (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => setVariantKey(k)}
+                        className={`px-2 py-0.5 rounded text-[10px] uppercase font-semibold transition-colors cursor-pointer ${
+                          variantKey === k
+                            ? 'bg-[#C6A87C] text-[#080806]'
+                            : 'bg-[#14120e] text-[#8a8278] hover:text-white border border-[#2a2520]'
+                        }`}
+                      >
+                        {k}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Add Input Bar */}
+                  <div className="grid grid-cols-12 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Key (e.g. Size)"
+                      value={variantKey}
+                      onChange={(e) => setVariantKey(e.target.value)}
+                      className="col-span-3 bg-[#12100d] border border-[#2a2520] rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:border-[#C6A87C]"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Value (e.g. 42 / XL)"
+                      value={variantVal}
+                      onChange={(e) => setVariantVal(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddStagedVariant();
+                        }
+                      }}
+                      className="col-span-4 bg-[#12100d] border border-[#2a2520] rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:border-[#C6A87C]"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Stock (10)"
+                      value={variantStock}
+                      onChange={(e) => setVariantStock(e.target.value)}
+                      className="col-span-3 bg-[#12100d] border border-[#2a2520] rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-[#C6A87C] font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddStagedVariant}
+                      disabled={!variantKey.trim() || !variantVal.trim()}
+                      className="col-span-2 rounded-lg bg-[#C6A87C] text-[#080806] hover:bg-white text-xs font-bold uppercase transition-all disabled:opacity-30 cursor-pointer flex items-center justify-center"
+                    >
+                      <i className="ri-add-line text-sm" />
+                    </button>
+                  </div>
+
+                  {/* Staged variants chips */}
+                  {stagedVariants.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {stagedVariants.map((sv) => {
+                        const [k, v] = Object.entries(sv.attributes)[0] || ['Edition', 'Custom'];
+                        return (
+                          <span
+                            key={sv.id}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#14120e] border border-[#C6A87C]/50 text-xs text-white shadow-xs"
+                          >
+                            <strong className="text-[#C6A87C]">{k}:</strong> {v}
+                            <span className="text-[10px] text-[#8a8278] font-mono">({sv.stock} units)</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveStagedVariant(sv.id)}
+                              className="text-gray-500 hover:text-red-400 ml-1 cursor-pointer"
+                            >
+                              <i className="ri-close-line text-xs" />
+                            </button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

@@ -19,6 +19,16 @@ const productSchema = new mongoose.Schema({
     price: {
         type: priceSchema
     },
+    discount: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 99
+    },
+    originalPrice: {
+        type: Number,
+        default: null
+    },
     images: [
         {
             url: {
@@ -51,6 +61,16 @@ const productSchema = new mongoose.Schema({
             },
             price: {
                 type: priceSchema
+            },
+            discount: {
+                type: Number,
+                default: 0,
+                min: 0,
+                max: 99
+            },
+            originalPrice: {
+                type: Number,
+                default: null
             },
         }
     ]
