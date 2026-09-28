@@ -53,9 +53,11 @@ VASTRA LOOM combines the visual language of a luxury fashion house with the engi
 
 <table width="100%" cellpadding="18">
 <tr>
-<td width="50%" valign="top">
 
-### 🛍️ Shopping
+<td width="25%" valign="top">
+
+<h3>🛍️ Shopping</h3>
+
 - 👑 Luxury menswear storefront
 - 🛍️ Dynamic product catalog
 - 🔎 Debounced search
@@ -64,47 +66,51 @@ VASTRA LOOM combines the visual language of a luxury fashion house with the engi
 - 💰 Dynamic pricing & discounts
 
 </td>
-<td width="50%" valign="top">
 
-### 🔐 Security
+<td width="25%" valign="top">
+
+<h3>🔐 Security</h3>
+
 - 👥 Buyer / Seller roles
 - 🔐 JWT + HttpOnly cookies
 - 🌐 Google & GitHub OAuth
 - 🛡️ Secure payment verification
 
 </td>
-</tr>
 
-<tr>
-<td width="50%" valign="top">
+<td width="25%" valign="top">
 
-### 💳 Commerce
+<h3>💳 Commerce</h3>
+
 - 💳 Razorpay payments
 - 🛒 Persistent cart
 - 🖼️ ImageKit media
 - ⚡ CDN optimization
 
 </td>
-<td width="50%" valign="top">
 
-### 🚀 Platform
+<td width="25%" valign="top">
+
+<h3>🚀 Platform</h3>
+
 - 📱 Responsive UI
 - ⚡ Monolithic architecture
 - 🚀 Vercel / Render
 - 🔄 Optimized discovery
 
 </td>
+
 </tr>
 </table>
 
 # 🛍️ Shopping Experience
-
-VASTRA LOOM is designed as a premium digital atelier rather than a conventional storefront.
-
-| Experience | Description |
-|---|---|
-| 🏠 **Curated Storefront** | Premium hero presentation, category discovery, featured products, and search. |
-| 🔎 **Product Discovery** | Debounced search with category-based exploration. |
+  
+  VASTRA LOOM is designed as a premium digital atelier rather than a conventional storefront.
+  
+  | Experience | Description |
+  |---|---|
+  | 🏠 **Curated Storefront** | Premium hero presentation, category discovery, featured products, and search. |
+  | 🔎 **Product Discovery** | Debounced search with category-based exploration. |
 | 👗 **Product Details** | High-resolution galleries, pricing, specifications, discounts, and inventory. |
 | 🎨 **Bespoke Variants** | Dynamically switch between product editions and attributes. |
 | 🛒 **Shopping Cart** | Add products or specific variants and manage quantities. |
