@@ -470,68 +470,32 @@ A glimpse into the VASTRA LOOM digital atelier experience.
 
 <td align="center" width="50%">
 
-### 🏠 Luxury Storefront
+### 🏠 Buyer Dashboard (User)
 
 <img
-  src="YOUR_STOREFRONT_IMAGE"
+  src="https://ik.imagekit.io/Rishi749/VASTRA_LOOM/Github/Vastra%20Loom.gif"
   width="100%"
   alt="VASTRA LOOM Storefront"
 />
 
 <p>
-Explore curated Indian menswear through a premium digital storefront.
+Explore curated collections, discover new arrivals, and manage your orders through an intuitive interface.
 </p>
 
 </td>
 
 <td align="center" width="50%">
 
-### 👗 Product Experience
+### 👗 Admin Dashboard (Seller)
 
 <img
-  src="YOUR_PRODUCT_IMAGE"
+  src="https://ik.imagekit.io/Rishi749/VASTRA_LOOM/Github/Vastra%20loom%202.gif"
   width="100%"
-  alt="VASTRA LOOM Product Experience"
+  alt="VASTRA LOOM Admin Dashboard"
 />
 
 <p>
-Explore high-resolution imagery, pricing, inventory, and product variants.
-</p>
-
-</td>
-
-</tr>
-
-<tr>
-
-<td align="center" width="50%">
-
-### 🎨 Variant Engine
-
-<img
-  src="YOUR_VARIANT_IMAGE"
-  width="100%"
-  alt="VASTRA LOOM Variant Engine"
-/>
-
-<p>
-Switch between bespoke product editions with real-time updates.
-</p>
-
-</td>
-
-<td align="center" width="50%">
-
-### 🧵 Atelier Studio
-
-<img
-  src="YOUR_SELLER_IMAGE"
-  width="100%"
-  alt="VASTRA LOOM Seller Atelier"
-/>
-
-<p>
-Manage products, pricing, media, variants, and inventory.
+Manage curated collections and track sales analytics through a centralized dashboard.
 </p>
 
 </td>
