@@ -20,6 +20,7 @@ const __dirname = path.dirname(__filename);
 const publicPath = path.resolve(__dirname, "../public");
 
 const app = express();
+app.set("trust proxy", 1);
 
 // ── Flexible CORS (Supports monolith same-origin, localhost dev, Render, and Vercel) ──
 const allowedOrigins = [
@@ -64,7 +65,8 @@ app.use(passport.initialize());
 passport.use(new GoogleStrategy({
     clientID: config.GOOGLE_CLIENT_ID,
     clientSecret: config.GOOGLE_CLIENT_SECRET,
-    callbackURL: "/api/auth/google/callback"
+    callbackURL: "/api/auth/google/callback",
+    proxy: true
 }, (accessToken, refreshToken, profile, done) => {
     return done(null, profile);
 }));
@@ -72,7 +74,8 @@ passport.use(new GoogleStrategy({
 passport.use(new GitHubStrategy({
     clientID: config.GITHUB_CLIENT_ID,
     clientSecret: config.GITHUB_CLIENT_SECRET,
-    callbackURL: "/api/auth/github/callback"
+    callbackURL: "/api/auth/github/callback",
+    proxy: true
 }, (accessToken, refreshToken, profile, done) => {
     return done(null, profile);
 }));

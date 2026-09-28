@@ -2,8 +2,8 @@ import React from 'react';
 
 const SocialAuth = () => {
   const handleGoogleAuth = () => {
-    // Redirects to backend OAuth endpoint
-    window.location.href = 'http://localhost:8080/api/auth/google';
+    // Redirects to backend OAuth endpoint (relative in monolith)
+    window.location.href = '/api/auth/google';
   };
 
   const handleAppleAuth = () => {
@@ -12,8 +12,8 @@ const SocialAuth = () => {
   };
 
   const handleGithubAuth = () => {
-    // Redirects to backend OAuth endpoint for GitHub
-    window.location.href = 'http://localhost:8080/api/auth/github';
+    // Redirects to backend OAuth endpoint for GitHub (relative in monolith)
+    window.location.href = '/api/auth/github';
   };
 
   return (
