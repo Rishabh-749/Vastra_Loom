@@ -51,56 +51,69 @@ VASTRA LOOM combines the visual language of a luxury fashion house with the engi
 
 # ✨ Features
 
-<table>
+<table width="100%">
 <tr>
-<td width="50%" valign="top">
 
-### 🛍️ Shopping & Products
+<td width="50%" valign="top" style="padding: 20px 28px 20px 8px;">
 
-- 👑 Luxury-focused Indian menswear storefront
-- 🛍️ Dynamic product catalog and discovery
-- 🔎 Debounced product search
-- 🎨 Real-time bespoke product variants
-- 📦 Variant-level inventory management
-- 💰 Dynamic pricing and discount management
+<h3>🛍️ Shopping & Products</h3>
 
-</td>
-<td width="50%" valign="top">
-
-### 🔐 Authentication & Security
-
-- 👥 Buyer & Seller role-based access
-- 🔐 JWT authentication with HttpOnly cookies
-- 🌐 Google & GitHub OAuth
-- 🛡️ Secure server-side payment verification
+<ul>
+<li>👑 Luxury-focused Indian menswear storefront</li>
+<li>🛍️ Dynamic product catalog and discovery</li>
+<li>🔎 Debounced product search</li>
+<li>🎨 Real-time bespoke product variants</li>
+<li>📦 Variant-level inventory management</li>
+<li>💰 Dynamic pricing and discount management</li>
+</ul>
 
 </td>
+
+<td width="50%" valign="top" style="padding: 20px 8px 20px 28px;">
+
+<h3>🔐 Authentication & Security</h3>
+
+<ul>
+<li>👥 Buyer & Seller role-based access</li>
+<li>🔐 JWT authentication with HttpOnly cookies</li>
+<li>🌐 Google & GitHub OAuth</li>
+<li>🛡️ Secure server-side payment verification</li>
+</ul>
+
+</td>
+
 </tr>
 
 <tr>
-<td width="50%" valign="top">
 
-### 💳 Commerce & Media
+<td width="50%" valign="top" style="padding: 20px 28px 20px 8px;">
 
-- 💳 Razorpay checkout integration
-- 🛒 Persistent shopping cart
-- 🖼️ ImageKit-powered media storage
-- ⚡ Image optimization & CDN delivery
+<h3>💳 Commerce & Media</h3>
 
-</td>
-<td width="50%" valign="top">
-
-### ⚡ Performance & Deployment
-
-- 📱 Fully responsive interface
-- ⚡ Unified monolithic architecture
-- 🚀 Vercel / Render deployment support
-- 🔄 Optimized product discovery
+<ul>
+<li>💳 Razorpay checkout integration</li>
+<li>🛒 Persistent shopping cart</li>
+<li>🖼️ ImageKit-powered media storage</li>
+<li>⚡ Image optimization & CDN delivery</li>
+</ul>
 
 </td>
+
+<td width="50%" valign="top" style="padding: 20px 8px 20px 28px;">
+
+<h3>⚡ Performance & Deployment</h3>
+
+<ul>
+<li>📱 Fully responsive interface</li>
+<li>⚡ Unified monolithic architecture</li>
+<li>🚀 Vercel / Render deployment support</li>
+<li>🔄 Optimized product discovery</li>
+</ul>
+
+</td>
+
 </tr>
 </table>
-
 ---
 
 # 🛍️ Shopping Experience
@@ -160,93 +173,79 @@ The backend verifies the Razorpay payment signature using **HMAC SHA-256** befor
 
 <table width="100%">
 <tr>
-
-<td width="50%" valign="top">
+<td colspan="2" width="50%" align="left">
 
 <h3>🔐 Authentication</h3>
 
-<p>
 Secure local authentication with role-based access and social OAuth login.
-</p>
-
-<p>
-<strong>👥 Roles</strong><br>
-Buyer / Seller
-</p>
-
-<p>
-<strong>🔐 Authentication</strong><br>
-JWT-based authentication
-</p>
-
-<p>
-<strong>🍪 Session</strong><br>
-HttpOnly Cookies
-</p>
-
-<p>
-<strong>🔑 Password Security</strong><br>
-bcrypt
-</p>
-
-<p>
-<strong>🌐 OAuth</strong><br>
-Google · GitHub
-</p>
-
-<p>
-<strong>🛡️ Route Protection</strong><br>
-Protected User & Seller Routes
-</p>
 
 </td>
 
-<td width="50%" valign="top">
+<td colspan="2" width="50%" align="left">
 
 <h3>🛠️ Technology Stack</h3>
 
-<p>
 Core technologies powering the VASTRA LOOM platform.
-</p>
-
-<p>
-<strong>🎨 Frontend</strong><br>
-React 19 · Vite · Tailwind CSS · Redux Toolkit
-</p>
-
-<p>
-<strong>⚙️ Backend</strong><br>
-Node.js · Express 5
-</p>
-
-<p>
-<strong>🗄️ Database</strong><br>
-MongoDB Atlas · Mongoose
-</p>
-
-<p>
-<strong>🔐 Authentication</strong><br>
-JWT · OAuth · bcrypt
-</p>
-
-<p>
-<strong>💳 Payments</strong><br>
-Razorpay
-</p>
-
-<p>
-<strong>🖼️ Media</strong><br>
-ImageKit · Multer
-</p>
-
-<p>
-<strong>🚀 Deployment</strong><br>
-Vercel · Render
-</p>
 
 </td>
-
 </tr>
+
+<tr>
+<th width="25%">Feature</th>
+<th width="25%">Implementation</th>
+<th width="20%">Layer</th>
+<th width="30%">Technologies</th>
+</tr>
+
+<tr>
+<td>👥 <strong>Roles</strong></td>
+<td>Buyer / Seller</td>
+<td>🎨 <strong>Frontend</strong></td>
+<td>React 19 · Vite · Tailwind CSS · Redux Toolkit</td>
+</tr>
+
+<tr>
+<td>🔐 <strong>Authentication</strong></td>
+<td>JWT-based</td>
+<td>⚙️ <strong>Backend</strong></td>
+<td>Node.js · Express 5</td>
+</tr>
+
+<tr>
+<td>🍪 <strong>Session</strong></td>
+<td>HttpOnly Cookies</td>
+<td>🗄️ <strong>Database</strong></td>
+<td>MongoDB Atlas · Mongoose</td>
+</tr>
+
+<tr>
+<td>🔑 <strong>Password Security</strong></td>
+<td>bcrypt</td>
+<td>🔐 <strong>Authentication</strong></td>
+<td>JWT · OAuth · bcrypt</td>
+</tr>
+
+<tr>
+<td>🌐 <strong>OAuth</strong></td>
+<td>Google · GitHub</td>
+<td>💳 <strong>Payments</strong></td>
+<td>Razorpay</td>
+</tr>
+
+<tr>
+<td>🛡️ <strong>Route Protection</strong></td>
+<td>Protected Routes</td>
+<td>🖼️ <strong>Media</strong></td>
+<td>ImageKit · Multer</td>
+</tr>
+
+<tr>
+<td></td>
+<td></td>
+<td>🚀 <strong>Deployment</strong></td>
+<td>Vercel · Render</td>
+</tr>
+
 </table>
 
 # 🏗️ System Architecture
