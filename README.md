@@ -158,11 +158,7 @@ The backend verifies the Razorpay payment signature using **HMAC SHA-256** befor
 
 ---
 
-<table>
-<tr>
-<td width="50%" valign="top">
-
-<table>
+<table width="100%">
 <tr>
 
 <td width="50%" valign="top">
@@ -173,36 +169,35 @@ The backend verifies the Razorpay payment signature using **HMAC SHA-256** befor
 Secure local authentication with role-based access and social OAuth login.
 </p>
 
-<table>
-<tr>
-<th>Feature</th>
-<th>Implementation</th>
-</tr>
-<tr>
-<td>👥 Roles</td>
-<td>Buyer / Seller</td>
-</tr>
-<tr>
-<td>🔐 Auth</td>
-<td>JWT-based</td>
-</tr>
-<tr>
-<td>🍪 Session</td>
-<td>HttpOnly Cookies</td>
-</tr>
-<tr>
-<td>🔑 Passwords</td>
-<td>bcrypt</td>
-</tr>
-<tr>
-<td>🌐 OAuth</td>
-<td>Google · GitHub</td>
-</tr>
-<tr>
-<td>🛡️ Protection</td>
-<td>Protected Routes</td>
-</tr>
-</table>
+<p>
+<strong>👥 Roles</strong><br>
+Buyer / Seller
+</p>
+
+<p>
+<strong>🔐 Authentication</strong><br>
+JWT-based authentication
+</p>
+
+<p>
+<strong>🍪 Session</strong><br>
+HttpOnly Cookies
+</p>
+
+<p>
+<strong>🔑 Password Security</strong><br>
+bcrypt
+</p>
+
+<p>
+<strong>🌐 OAuth</strong><br>
+Google · GitHub
+</p>
+
+<p>
+<strong>🛡️ Route Protection</strong><br>
+Protected User & Seller Routes
+</p>
 
 </td>
 
@@ -214,40 +209,40 @@ Secure local authentication with role-based access and social OAuth login.
 Core technologies powering the VASTRA LOOM platform.
 </p>
 
-<table>
-<tr>
-<th>Layer</th>
-<th>Technologies</th>
-</tr>
-<tr>
-<td>🎨 Frontend</td>
-<td>React 19 · Vite · Tailwind CSS · Redux Toolkit</td>
-</tr>
-<tr>
-<td>⚙️ Backend</td>
-<td>Node.js · Express 5</td>
-</tr>
-<tr>
-<td>🗄️ Database</td>
-<td>MongoDB Atlas · Mongoose</td>
-</tr>
-<tr>
-<td>🔐 Auth</td>
-<td>JWT · OAuth · bcrypt</td>
-</tr>
-<tr>
-<td>💳 Payments</td>
-<td>Razorpay</td>
-</tr>
-<tr>
-<td>🖼️ Media</td>
-<td>ImageKit · Multer</td>
-</tr>
-<tr>
-<td>🚀 Deployment</td>
-<td>Vercel · Render</td>
-</tr>
-</table>
+<p>
+<strong>🎨 Frontend</strong><br>
+React 19 · Vite · Tailwind CSS · Redux Toolkit
+</p>
+
+<p>
+<strong>⚙️ Backend</strong><br>
+Node.js · Express 5
+</p>
+
+<p>
+<strong>🗄️ Database</strong><br>
+MongoDB Atlas · Mongoose
+</p>
+
+<p>
+<strong>🔐 Authentication</strong><br>
+JWT · OAuth · bcrypt
+</p>
+
+<p>
+<strong>💳 Payments</strong><br>
+Razorpay
+</p>
+
+<p>
+<strong>🖼️ Media</strong><br>
+ImageKit · Multer
+</p>
+
+<p>
+<strong>🚀 Deployment</strong><br>
+Vercel · Render
+</p>
 
 </td>
 
