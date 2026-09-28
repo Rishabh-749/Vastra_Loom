@@ -638,8 +638,8 @@ const ProductDetail = () => {
         </div>
       )}
 
-      {/* ── Main Hero Stage Container (Centered, balanced margins on all 4 sides, fits in 1 screen fold) ── */}
-      <div className="min-h-[calc(100vh-4.5rem)] max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 flex flex-col justify-center">
+      {/* ── Main Hero Stage Container (Centered, balanced margins on all 4 sides) ── */}
+      <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-8 flex flex-col">
         
         {/* Top bar: Left Back Navigation + Right Atelier Curator Suite */}
         <div className="flex items-center justify-between pb-3 shrink-0 flex-wrap gap-3 border-b border-[var(--border-subtle)] mb-5">
@@ -722,7 +722,7 @@ const ProductDetail = () => {
             
             {/* 1. Vertical Thumbnail Rail on the Far Left */}
             {activeImages && activeImages.length > 1 && (
-              <div className="flex flex-col gap-2 shrink-0 overflow-y-auto max-h-[620px] scrollbar-none w-14 sm:w-16">
+              <div className="flex flex-col gap-2 shrink-0 overflow-y-auto overflow-x-hidden max-h-[620px] no-scrollbar w-14 sm:w-16 py-0.5 px-0.5 select-none">
                 {activeImages.map((img, idx) => {
                   const thumb = getImageUrl(img, 200);
                   const isActive = activeImageIndex === idx;
@@ -734,16 +734,20 @@ const ProductDetail = () => {
                         setActiveImageIndex(idx);
                         setImgLoadError(false);
                       }}
-                      className={`relative aspect-[3/4] w-full rounded-lg bg-[var(--bg-card-subtle)] overflow-hidden transition-all cursor-pointer ${
+                      onMouseEnter={() => {
+                        setActiveImageIndex(idx);
+                        setImgLoadError(false);
+                      }}
+                      className={`group relative aspect-[3/4] w-full rounded-xl bg-[var(--bg-card-subtle)] overflow-hidden transition-all duration-300 ease-out cursor-pointer ${
                         isActive
-                          ? 'border-2 border-[var(--accent-gold)] opacity-100 shadow-sm scale-[1.02]'
-                          : 'border border-[var(--border-card)] opacity-60 hover:opacity-100 hover:border-[var(--accent-gold)]/50'
+                          ? 'ring-2 ring-[var(--accent-gold)] opacity-100 shadow-[0_0_12px_var(--accent-glow)]'
+                          : 'ring-1 ring-[var(--border-card)] opacity-60 hover:opacity-100 hover:ring-[var(--accent-gold)]/60'
                       }`}
                     >
                       <img
                         src={thumb}
                         alt=""
-                        className="w-full h-full object-cover object-top"
+                        className="w-full h-full object-cover object-top transition-transform duration-500 ease-out group-hover:scale-110"
                       />
                     </button>
                   );

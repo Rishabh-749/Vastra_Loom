@@ -6,7 +6,6 @@ import { useAuth } from '../hooks/useAuth';
 import { useNavigate, Link } from 'react-router';
 import SocialAuth from '../components/SocialAuth';
 import SEO from '../../../components/SEO';
-import ThemeSwitcher from '../../../components/ThemeSwitcher';
 
 // ── Eye toggle ────────────────────────────────────────────────────────────────
 const EyeToggle = ({ show, onToggle }) => (
@@ -99,7 +98,6 @@ const Login = () => {
           <span className="text-base font-bold tracking-[0.15em] uppercase">VASTRA LOOM</span>
         </Link>
         <div className="flex items-center gap-2">
-          <ThemeSwitcher compact />
           <Link
             to="/register"
             className="text-xs font-semibold px-3 py-1 rounded-full transition-colors border"
@@ -163,9 +161,8 @@ const Login = () => {
             <i className="ri-shopping-bag-3-line text-xl"></i>
             <span className="text-lg font-bold tracking-[0.18em] uppercase">VASTRA LOOM</span>
           </Link>
-          {/* Auth direction & Theme switcher */}
+          {/* Auth direction */}
           <div className="flex items-center gap-3 text-xs">
-            <ThemeSwitcher compact />
             <span style={{ color: 'var(--text-muted)' }}>Don't have an account?</span>
             <Link
               to="/register"
