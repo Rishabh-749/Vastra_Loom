@@ -48,22 +48,21 @@ The catalog is designed around premium collections including:
 VASTRA LOOM combines the visual language of a luxury fashion house with the engineering required for a production-oriented e-commerce platform.
 
 ---
-
 # ✨ Features
 
-<table width="100%" cellpadding="18">
+<table width="100%" cellpadding="16">
 <tr>
 
 <td width="25%" valign="top">
 
 <h3>🛍️ Shopping</h3>
 
-- 👑 Luxury menswear storefront
-- 🛍️ Dynamic product catalog
+- 👑 Luxury menswear
+- 🛍️ Product catalog
 - 🔎 Debounced search
 - 🎨 Product variants
-- 📦 Variant-level inventory
-- 💰 Dynamic pricing & discounts
+- 📦 Variant inventory
+- 💰 Dynamic pricing
 
 </td>
 
@@ -74,7 +73,8 @@ VASTRA LOOM combines the visual language of a luxury fashion house with the engi
 - 👥 Buyer / Seller roles
 - 🔐 JWT + HttpOnly cookies
 - 🌐 Google & GitHub OAuth
-- 🛡️ Secure payment verification
+- 🛡️ Protected routes
+- 💳 Payment verification
 
 </td>
 
@@ -86,6 +86,7 @@ VASTRA LOOM combines the visual language of a luxury fashion house with the engi
 - 🛒 Persistent cart
 - 🖼️ ImageKit media
 - ⚡ CDN optimization
+- 📦 Inventory management
 
 </td>
 
@@ -97,6 +98,7 @@ VASTRA LOOM combines the visual language of a luxury fashion house with the engi
 - ⚡ Monolithic architecture
 - 🚀 Vercel / Render
 - 🔄 Optimized discovery
+- 🎨 Dynamic experience
 
 </td>
 
