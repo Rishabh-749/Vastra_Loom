@@ -8,8 +8,6 @@
 
 <div align="center">
 
-# VASTRA LOOM
-
 ### Haute Couture Monolithic Platform
 
 **A luxury full-stack e-commerce platform for bespoke Indian menswear, artisanal fashion, and modern digital atelier experiences.**
