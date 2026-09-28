@@ -103,7 +103,10 @@ const googleCallback = async (req, res) =>{
         maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    const redirectUrl = user.role === 'seller' ? "http://localhost:5173/seller/dashboard" : "http://localhost:5173/";
+    const clientBase = (process.env.CLIENT_URL || "").replace(/\/$/, "");
+    const redirectUrl = user.role === 'seller'
+        ? (clientBase ? `${clientBase}/seller/dashboard` : "/seller/dashboard")
+        : (clientBase ? `${clientBase}/` : "/");
     res.redirect(redirectUrl);
 }
 
@@ -142,7 +145,10 @@ const githubCallback = async (req, res) => {
         maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    const redirectUrl = user.role === 'seller' ? "http://localhost:5173/seller/dashboard" : "http://localhost:5173/";
+    const clientBase = (process.env.CLIENT_URL || "").replace(/\/$/, "");
+    const redirectUrl = user.role === 'seller'
+        ? (clientBase ? `${clientBase}/seller/dashboard` : "/seller/dashboard")
+        : (clientBase ? `${clientBase}/` : "/");
     res.redirect(redirectUrl);
 }
 

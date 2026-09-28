@@ -1,0 +1,16 @@
+{
+  "name": "snitch-project-monolith",
+  "version": "1.0.0",
+  "description": "Vastra Loom Haute Couture Monolithic Platform",
+  "main": "Backend/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node Backend/server.js",
+    "build": "node sync_frontend.js",
+    "dev:backend": "cd Backend && npm run dev",
+    "dev:frontend": "cd Frontend && npm run dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

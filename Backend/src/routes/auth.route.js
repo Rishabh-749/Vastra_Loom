@@ -19,22 +19,22 @@ authRouter.get("/me", authenticateUser, (req, res) => {
     });
 });
 
-authRouter.get("/google",passport.authenticate("google", {scope: ["profile", "email"]}));
+authRouter.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 authRouter.get("/google/callback",
     passport.authenticate("google", {
         session: false,
-        failureRedirect: config.NODE_ENV == "development" ? "http://localhost:5173/login" : "/login"
+        failureRedirect: process.env.CLIENT_URL ? `${process.env.CLIENT_URL.replace(/\/$/, "")}/login` : "/login"
     }),
     authController.googleCallback,
-)
+);
 
 authRouter.get("/github", passport.authenticate("github", { scope: [ "user:email" ] }));
 authRouter.get("/github/callback",
     passport.authenticate("github", {
         session: false,
-        failureRedirect: config.NODE_ENV == "development" ? "http://localhost:5173/login" : "/login"
+        failureRedirect: process.env.CLIENT_URL ? `${process.env.CLIENT_URL.replace(/\/$/, "")}/login` : "/login"
     }),
     authController.githubCallback,
-)
+);
 
 export default authRouter;
