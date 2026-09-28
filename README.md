@@ -408,8 +408,6 @@ or the next available port.
 
 ---
 
----
-
 # 🌐 API Overview
 
 VASTRA LOOM exposes REST APIs for authentication, products, cart management, and payments.
