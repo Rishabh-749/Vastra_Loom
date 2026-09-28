@@ -153,7 +153,6 @@ Razorpay is integrated into the checkout lifecycle with secure server-side payme
 
 > **Payment Flow:**  
 > The customer selects a product or variant and proceeds through the shopping cart to Razorpay Checkout. After payment completion, the server verifies the Razorpay payment signature using HMAC SHA-256 before clearing the cart and confirming the paid order.
-```
 
 The backend verifies the Razorpay payment signature using **HMAC SHA-256** before completing the payment workflow.
 
@@ -202,7 +201,6 @@ Authentication supports both traditional credentials and OAuth providers, with t
 
 > **Architecture Overview:**  
 > The application follows a modern full-stack architecture where the React SPA communicates with the Express 5 backend through REST APIs. The backend handles business logic, static assets, database operations, image delivery through ImageKit CDN, and payment processing through Razorpay. MongoDB Atlas serves as the primary database.
-```
 
 Product media is uploaded through the backend using memory-based file handling and synchronized with the `VASTRA_LOOM` ImageKit folder.
 
@@ -512,36 +510,14 @@ Manage products, pricing, media, variants, and inventory.
 
 # 🤝 Contributing
 
-Contributions are welcome.
+Contributions are always welcome. Whether you're improving the codebase, enhancing the user experience, or enriching cultural content, every contribution helps make Sanskruti AI a more meaningful platform.
 
-If you would like to improve VASTRA LOOM:
+If you'd like to contribute, feel free to open an issue, suggest an improvement, or submit a pull request.
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test the implementation
-5. Commit your changes
-6. Open a Pull Request
-
-```bash
-git checkout -b feature/your-feature
-
-git add .
-
-git commit -m "feat: add your feature"
-
-git push origin feature/your-feature
-```
+> **Together, we're preserving India's civilizational heritage through technology.**
 
 ---
 
-# 📜 License
-
-This project is licensed under the **MIT License**.
-
-See the `LICENSE` file for more information.
-
----
 
 <p align="center">
   <img
