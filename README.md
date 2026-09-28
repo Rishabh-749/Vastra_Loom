@@ -51,67 +51,49 @@ VASTRA LOOM combines the visual language of a luxury fashion house with the engi
 
 # ✨ Features
 
-<table width="100%" cellpadding="22">
+<table width="100%" cellpadding="18">
 <tr>
-
 <td width="50%" valign="top">
 
-<h3>🛍️ Shopping & Products</h3>
-
-<ul>
-<li>👑 Luxury-focused Indian menswear storefront</li>
-<li>🛍️ Dynamic product catalog and discovery</li>
-<li>🔎 Debounced product search</li>
-<li>🎨 Real-time bespoke product variants</li>
-<li>📦 Variant-level inventory management</li>
-<li>💰 Dynamic pricing and discount management</li>
-</ul>
+### 🛍️ Shopping
+- 👑 Luxury menswear storefront
+- 🛍️ Dynamic product catalog
+- 🔎 Debounced search
+- 🎨 Product variants
+- 📦 Variant-level inventory
+- 💰 Dynamic pricing & discounts
 
 </td>
-
 <td width="50%" valign="top">
 
-<h3>🔐 Authentication & Security</h3>
-
-<ul>
-<li>👥 Buyer & Seller role-based access</li>
-<li>🔐 JWT authentication with HttpOnly cookies</li>
-<li>🌐 Google & GitHub OAuth</li>
-<li>🛡️ Secure server-side payment verification</li>
-</ul>
+### 🔐 Security
+- 👥 Buyer / Seller roles
+- 🔐 JWT + HttpOnly cookies
+- 🌐 Google & GitHub OAuth
+- 🛡️ Secure payment verification
 
 </td>
-
 </tr>
 
 <tr>
-
 <td width="50%" valign="top">
 
-<h3>💳 Commerce & Media</h3>
-
-<ul>
-<li>💳 Razorpay checkout integration</li>
-<li>🛒 Persistent shopping cart</li>
-<li>🖼️ ImageKit-powered media storage</li>
-<li>⚡ Image optimization & CDN delivery</li>
-</ul>
+### 💳 Commerce
+- 💳 Razorpay payments
+- 🛒 Persistent cart
+- 🖼️ ImageKit media
+- ⚡ CDN optimization
 
 </td>
-
 <td width="50%" valign="top">
 
-<h3>⚡ Performance & Deployment</h3>
-
-<ul>
-<li>📱 Fully responsive interface</li>
-<li>⚡ Unified monolithic architecture</li>
-<li>🚀 Vercel / Render deployment support</li>
-<li>🔄 Optimized product discovery</li>
-</ul>
+### 🚀 Platform
+- 📱 Responsive UI
+- ⚡ Monolithic architecture
+- 🚀 Vercel / Render
+- 🔄 Optimized discovery
 
 </td>
-
 </tr>
 </table>
 
@@ -468,23 +450,6 @@ VASTRA LOOM exposes RESTful APIs for authentication, product management, cart op
 | 👤 **User** | Authentication, identity, role, and OAuth information |
 | 👗 **Product** | Product information, pricing, stock, images, seller, and variants |
 | 🛒 **Cart** | User shopping cart and selected product variants |
-
----
-
-# 🔒 Production Considerations
-
-Before deploying VASTRA LOOM publicly:
-
-- Configure production MongoDB credentials
-- Use a strong JWT secret
-- Configure production OAuth callback URLs
-- Configure Razorpay production credentials
-- Configure ImageKit credentials securely
-- Set the correct `CLIENT_URL`
-- Keep `.env` outside version control
-- Enable HTTPS in production
-- Verify Razorpay signatures server-side
-- Restrict OAuth redirect URLs to trusted domains
 
 ---
 
