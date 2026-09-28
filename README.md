@@ -51,10 +51,10 @@ VASTRA LOOM combines the visual language of a luxury fashion house with the engi
 
 # ✨ Features
 
-<table width="100%">
+<table width="100%" cellpadding="22">
 <tr>
 
-<td width="50%" valign="top" style="padding: 20px 28px 20px 8px;">
+<td width="50%" valign="top">
 
 <h3>🛍️ Shopping & Products</h3>
 
@@ -69,7 +69,7 @@ VASTRA LOOM combines the visual language of a luxury fashion house with the engi
 
 </td>
 
-<td width="50%" valign="top" style="padding: 20px 8px 20px 28px;">
+<td width="50%" valign="top">
 
 <h3>🔐 Authentication & Security</h3>
 
@@ -86,7 +86,7 @@ VASTRA LOOM combines the visual language of a luxury fashion house with the engi
 
 <tr>
 
-<td width="50%" valign="top" style="padding: 20px 28px 20px 8px;">
+<td width="50%" valign="top">
 
 <h3>💳 Commerce & Media</h3>
 
@@ -99,7 +99,7 @@ VASTRA LOOM combines the visual language of a luxury fashion house with the engi
 
 </td>
 
-<td width="50%" valign="top" style="padding: 20px 8px 20px 28px;">
+<td width="50%" valign="top">
 
 <h3>⚡ Performance & Deployment</h3>
 
@@ -114,7 +114,6 @@ VASTRA LOOM combines the visual language of a luxury fashion house with the engi
 
 </tr>
 </table>
----
 
 # 🛍️ Shopping Experience
 
